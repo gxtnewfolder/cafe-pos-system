@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+// ✅ 1. แก้ Type ตรงนี้: params เป็น Promise
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+export async function PATCH(req: Request, props: Props) {
   try {
+    // ✅ 2. ต้อง await params ก่อนใช้งาน
+    const params = await props.params;
+    const id = params.id;
+
     const body = await req.json();
     const updated = await prisma.product.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...body,
-        price: body.price ? Number(body.price) : undefined, // แปลงเป็นเลขถ้ามีการส่งมา
+        price: body.price ? Number(body.price) : undefined,
       },
     });
     return NextResponse.json(updated);
@@ -17,12 +26,15 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: Props) {
   try {
-    // Soft Delete: แค่ปิด is_active ไม่ลบข้อมูลจริง (เพื่อรักษาประวัติออเดอร์เก่า)
+    // ✅ 2. ต้อง await params ก่อนใช้งานเช่นกัน
+    const params = await props.params;
+    const id = params.id;
+
     await prisma.product.update({
-      where: { id: params.id },
-      data: { is_active: false }, 
+      where: { id },
+      data: { is_active: false },
     });
     return NextResponse.json({ success: true });
   } catch (error) {
