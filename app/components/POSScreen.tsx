@@ -3,6 +3,9 @@
 import { useState } from "react";
 import PaymentDialog from "./PaymentDialog";
 import { Product } from "@/app/generated/prisma/client";
+import MemberDialog from "./MemberDialog";
+import { User, LogOut } from "lucide-react";
+import { Customer } from "@/app/generated/prisma/client";
 import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
@@ -30,6 +33,11 @@ export default function POSScreen({ products }: POSScreenProps) {
 
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
+  const [isMemberOpen, setIsMemberOpen] = useState(false);
 
   const addToCart = (product: ProductWithNumber) => {
     setCart((prev) => {
@@ -78,8 +86,10 @@ export default function POSScreen({ products }: POSScreenProps) {
           items: cart,
           totalAmount: totalAmount,
           paymentType: "QR",
+          customerId: selectedCustomer?.id,
         }),
       });
+      setSelectedCustomer(null);
 
       if (!response.ok) throw new Error("Payment failed");
 
@@ -113,6 +123,37 @@ export default function POSScreen({ products }: POSScreenProps) {
             ☕ Pocket Café <Badge variant="secondary">POS</Badge>
           </h1>
           <div className="text-sm text-slate-500">Staff: Admin</div>
+          {/* ส่วนแสดงสมาชิก / ปุ่ม Login */}
+          <div className="flex items-center gap-3">
+            {selectedCustomer ? (
+              <div className="flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 animate-in slide-in-from-right">
+                <div className="flex flex-col items-end leading-none">
+                  <span className="text-sm font-bold text-blue-700">
+                    {selectedCustomer.name}
+                  </span>
+                  <span className="text-xs text-blue-500">
+                    แต้มสะสม: {selectedCustomer.points}
+                  </span>
+                </div>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-8 w-8 rounded-full text-blue-400 hover:text-red-500 hover:bg-red-50"
+                  onClick={() => setSelectedCustomer(null)}
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() => setIsMemberOpen(true)}
+              >
+                <User className="w-4 h-4" /> สมาชิก
+              </Button>
+            )}
+          </div>
         </header>
 
         {/* ใช้ ScrollArea ของ shadcn แทน div overflow-auto */}
@@ -284,6 +325,13 @@ export default function POSScreen({ products }: POSScreenProps) {
         totalAmount={totalAmount}
         onConfirm={handlePayment}
         isProcessing={isProcessing}
+      />
+
+      {/* Member Dialog */}
+      <MemberDialog
+        isOpen={isMemberOpen}
+        onClose={() => setIsMemberOpen(false)}
+        onCustomerSelected={setSelectedCustomer}
       />
     </div>
   );
