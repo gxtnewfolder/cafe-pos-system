@@ -4,7 +4,7 @@ import { useState } from "react";
 import PaymentDialog from "./PaymentDialog";
 import { Product } from "@/app/generated/prisma/client";
 import MemberDialog from "./MemberDialog";
-import { User, LogOut } from "lucide-react";
+import { User, LogOut, Package } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
@@ -40,7 +40,11 @@ export default function POSScreen({ products }: POSScreenProps) {
     null
   );
   const [isMemberOpen, setIsMemberOpen] = useState(false);
-  const [successOrder, setSuccessOrder] = useState<{orderId: string, items: any[], date: Date} | null>(null);
+  const [successOrder, setSuccessOrder] = useState<{
+    orderId: string;
+    items: any[];
+    date: Date;
+  } | null>(null);
 
   const addToCart = (product: ProductWithNumber) => {
     setCart((prev) => {
@@ -80,18 +84,18 @@ export default function POSScreen({ products }: POSScreenProps) {
   const handlePayment = async () => {
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: cart,
           totalAmount: totalAmount,
-          paymentType: 'QR',
-          customerId: selectedCustomer?.id
-        })
+          paymentType: "QR",
+          customerId: selectedCustomer?.id,
+        }),
       });
 
-      if (!response.ok) throw new Error('Payment failed');
+      if (!response.ok) throw new Error("Payment failed");
       const data = await response.json();
 
       // ✅ 1. เก็บข้อมูลออเดอร์สำเร็จไว้ก่อนเคลียร์ตะกร้า
@@ -99,18 +103,17 @@ export default function POSScreen({ products }: POSScreenProps) {
       setSuccessOrder({
         orderId: data.orderId,
         items: currentItems,
-        date: new Date()
+        date: new Date(),
       });
 
       // ✅ 2. เคลียร์ตะกร้า
-      setCart([]); 
+      setCart([]);
       // setSelectedCustomer(null); // (Optional) Logout ลูกค้า
-      
+
       // ❌ ไม่ต้องปิด Dialog แล้ว ( setIsPaymentOpen(false) ลบออก )
       // ให้ Dialog มัน Re-render เป็นหน้า Success แทน เพราะเราส่ง successOrder ไปให้มัน
 
       toast.success("บันทึกออเดอร์สำเร็จ!");
-
     } catch (error) {
       console.error(error);
       toast.error("เกิดข้อผิดพลาด");
@@ -141,6 +144,18 @@ export default function POSScreen({ products }: POSScreenProps) {
             >
               <LayoutDashboard className="w-4 h-4 mr-2" />
               หลังบ้าน
+            </Button>
+          </Link>
+
+          {/* 👇 ปุ่มทางลัดไปแก้สินค้า */}
+          <Link href="/dashboard/products">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-500 hover:text-slate-900"
+            >
+              <Package className="w-4 h-4 mr-2" />
+              สินค้า
             </Button>
           </Link>
           {/* <div className="text-sm text-slate-500">Staff: Admin</div> */}

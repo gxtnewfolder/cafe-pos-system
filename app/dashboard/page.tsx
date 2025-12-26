@@ -8,7 +8,9 @@ import {
   DollarSign,
   Users,
   ShoppingBag,
+  Package,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { OverviewChart } from "./components/OverviewChart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -87,11 +89,20 @@ export default async function DashboardPage() {
           Dashboard
         </h2>
         <div className="flex items-center space-x-2">
-          <Link
-            href="/"
-            className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-md hover:bg-slate-800 transition"
-          >
-            <ArrowLeft className="w-4 h-4" /> กลับหน้าขาย (POS)
+          {/* ปุ่มไปหน้าจัดการสินค้า */}
+          <Link href="/dashboard/products">
+            <Button variant="outline" className="gap-2">
+              <Package className="w-4 h-4" />
+              จัดการสินค้า
+            </Button>
+          </Link>
+
+          {/* ปุ่มกลับหน้า POS */}
+          <Link href="/">
+            <Button className="gap-2 bg-slate-900 text-white hover:bg-slate-800">
+              <ArrowLeft className="w-4 h-4" /> 
+              กลับหน้าขาย (POS)
+            </Button>
           </Link>
         </div>
       </div>
