@@ -8,6 +8,8 @@ import { User, LogOut } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
+import { LayoutDashboard } from "lucide-react";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -122,7 +124,17 @@ export default function POSScreen({ products }: POSScreenProps) {
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             ☕ Pocket Café <Badge variant="secondary">POS</Badge>
           </h1>
-          <div className="text-sm text-slate-500">Staff: Admin</div>
+          <Link href="/dashboard">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-500 hover:text-slate-900"
+            >
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              หลังบ้าน
+            </Button>
+          </Link>
+          {/* <div className="text-sm text-slate-500">Staff: Admin</div> */}
           {/* ส่วนแสดงสมาชิก / ปุ่ม Login */}
           <div className="flex items-center gap-3">
             {selectedCustomer ? (
