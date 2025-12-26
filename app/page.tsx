@@ -8,8 +8,6 @@ async function getProducts() {
     orderBy: { category: 'desc' },
   });
 
-  // ⚠️ สำคัญ: แปลง Decimal -> Number ก่อนส่งไป Client Component
-  // เพราะ Client Component รับ Decimal Object ของ Prisma ตรงๆ ไม่ได้
   return products.map((p) => ({
     ...p,
     price: Number(p.price) 

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import prisma from "@/lib/db";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { th } from "date-fns/locale"; // ใช้ภาษาไทย
