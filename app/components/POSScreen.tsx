@@ -40,6 +40,7 @@ export default function POSScreen({ products }: POSScreenProps) {
     null
   );
   const [isMemberOpen, setIsMemberOpen] = useState(false);
+  const [successOrder, setSuccessOrder] = useState<{orderId: string, items: any[], date: Date} | null>(null);
 
   const addToCart = (product: ProductWithNumber) => {
     setCart((prev) => {
@@ -78,42 +79,50 @@ export default function POSScreen({ products }: POSScreenProps) {
 
   const handlePayment = async () => {
     setIsProcessing(true);
-
     try {
-      // 1. ส่งข้อมูลไป Backend
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: cart,
           totalAmount: totalAmount,
-          paymentType: "QR",
-          customerId: selectedCustomer?.id,
-        }),
+          paymentType: 'QR',
+          customerId: selectedCustomer?.id
+        })
       });
-      setSelectedCustomer(null);
 
-      if (!response.ok) throw new Error("Payment failed");
-
+      if (!response.ok) throw new Error('Payment failed');
       const data = await response.json();
 
-      // 2. ถ้าสำเร็จ -> เคลียร์ตะกร้า -> ปิด popup
-      setCart([]); // ล้างตะกร้า
-      setIsPaymentOpen(false); // ปิด popup
-
-      toast.success("บันทึกออเดอร์สำเร็จ!", {
-        description: `Order ID: ${data.orderId.substring(0, 8)}...`,
-        duration: 3000,
-        // ไม่ต้องกำหนดสีเอง Sonner จัดการให้สวยๆ เลย
+      // ✅ 1. เก็บข้อมูลออเดอร์สำเร็จไว้ก่อนเคลียร์ตะกร้า
+      const currentItems = [...cart]; // copy items ไว้ก่อน
+      setSuccessOrder({
+        orderId: data.orderId,
+        items: currentItems,
+        date: new Date()
       });
+
+      // ✅ 2. เคลียร์ตะกร้า
+      setCart([]); 
+      // setSelectedCustomer(null); // (Optional) Logout ลูกค้า
+      
+      // ❌ ไม่ต้องปิด Dialog แล้ว ( setIsPaymentOpen(false) ลบออก )
+      // ให้ Dialog มัน Re-render เป็นหน้า Success แทน เพราะเราส่ง successOrder ไปให้มัน
+
+      toast.success("บันทึกออเดอร์สำเร็จ!");
+
     } catch (error) {
       console.error(error);
-      toast.error("เกิดข้อผิดพลาด", {
-        description: "ไม่สามารถบันทึกออเดอร์ได้ กรุณาลองใหม่",
-      });
+      toast.error("เกิดข้อผิดพลาด");
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  // ✅ ฟังก์ชันตอนปิด Dialog ให้เคลียร์ค่า successOrder ทิ้งด้วย
+  const handleClosePayment = () => {
+    setIsPaymentOpen(false);
+    setTimeout(() => setSuccessOrder(null), 300); // delay นิดนึงให้ปิด animation จบก่อนค่อย reset
   };
 
   return (
@@ -333,10 +342,11 @@ export default function POSScreen({ products }: POSScreenProps) {
       {/* Payment Dialog */}
       <PaymentDialog
         isOpen={isPaymentOpen}
-        onClose={() => setIsPaymentOpen(false)}
-        totalAmount={totalAmount}
+        onClose={handleClosePayment}
+        totalAmount={successOrder ? 0 : totalAmount}
         onConfirm={handlePayment}
         isProcessing={isProcessing}
+        successData={successOrder}
       />
 
       {/* Member Dialog */}

@@ -5,9 +5,6 @@ export async function GET() {
   try {
     // ดึงสินค้าทั้งหมดที่ Active อยู่
     const products = await prisma.product.findMany({
-      where: {
-        is_active: true,
-      },
       orderBy: {
         category: 'asc', // เรียงตามหมวดหมู่
       }
@@ -19,5 +16,26 @@ export async function GET() {
       { error: "Failed to fetch products" },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const { name, code, price, category, image_url } = body;
+
+    const newProduct = await prisma.product.create({
+      data: {
+        name,
+        code,
+        price: Number(price),
+        category,
+        image_url,
+        is_active: true
+      }
+    });
+    return NextResponse.json(newProduct);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }
