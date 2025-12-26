@@ -1,8 +1,10 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Product } from '@/app/generated/prisma/client';
-import { Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import { useState } from "react";
+import PaymentDialog from "./PaymentDialog";
+import { Product } from "@/app/generated/prisma/client";
+import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -11,11 +13,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
-// รับ Props เป็นสินค้าที่แปลงราคาเป็น number แล้ว
-type ProductWithNumber = Omit<Product, 'price'> & { price: number };
+type ProductWithNumber = Omit<Product, "price"> & { price: number };
 
 type CartItem = {
-  product: ProductWithNumber; // ใช้ตัวที่แปลงแล้ว
+  product: ProductWithNumber;
   quantity: number;
   options?: any;
 };
@@ -27,26 +28,24 @@ type POSScreenProps = {
 export default function POSScreen({ products }: POSScreenProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  // ฟังก์ชันเพิ่มของลงตะกร้า
-  const addToCart = (product: any) => {
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const addToCart = (product: ProductWithNumber) => {
     setCart((prev) => {
       const existingItem = prev.find((item) => item.product.id === product.id);
-      
       if (existingItem) {
-        // ถ้ามีแล้ว ให้เพิ่มจำนวน
         return prev.map((item) =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        // ถ้ายังไม่มี ให้เพิ่มใหม่
         return [...prev, { product, quantity: 1 }];
       }
     });
   };
 
-  // ฟังก์ชันลบของ/ลดจำนวน
   const removeFromCart = (productId: string) => {
     setCart((prev) => {
       return prev.reduce((acc, item) => {
@@ -54,7 +53,6 @@ export default function POSScreen({ products }: POSScreenProps) {
           if (item.quantity > 1) {
             acc.push({ ...item, quantity: item.quantity - 1 });
           }
-          // ถ้าเหลือ 1 แล้วกดลบ ก็ไม่ต้อง push เข้า acc (คือหายไปเลย)
         } else {
           acc.push(item);
         }
@@ -63,11 +61,48 @@ export default function POSScreen({ products }: POSScreenProps) {
     });
   };
 
-  // คำนวณยอดรวม
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+
+  const handlePayment = async () => {
+    setIsProcessing(true);
+
+    try {
+      // 1. ส่งข้อมูลไป Backend
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart,
+          totalAmount: totalAmount,
+          paymentType: "QR",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Payment failed");
+
+      const data = await response.json();
+
+      // 2. ถ้าสำเร็จ -> เคลียร์ตะกร้า -> ปิด popup
+      setCart([]); // ล้างตะกร้า
+      setIsPaymentOpen(false); // ปิด popup
+
+      toast.success("บันทึกออเดอร์สำเร็จ!", {
+        description: `Order ID: ${data.orderId.substring(0, 8)}...`,
+        duration: 3000,
+        // ไม่ต้องกำหนดสีเอง Sonner จัดการให้สวยๆ เลย
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("เกิดข้อผิดพลาด", {
+        description: "ไม่สามารถบันทึกออเดอร์ได้ กรุณาลองใหม่",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
@@ -80,113 +115,202 @@ export default function POSScreen({ products }: POSScreenProps) {
           <div className="text-sm text-slate-500">Staff: Admin</div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6">
+        {/* ใช้ ScrollArea ของ shadcn แทน div overflow-auto */}
+        <ScrollArea className="flex-1 p-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                onClick={() => addToCart(product)}
-                className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col gap-2 hover:shadow-md hover:border-blue-400 transition-all cursor-pointer active:scale-95 duration-100 select-none"
-              >
-                <div className="aspect-square bg-slate-100 rounded-lg mb-2 overflow-hidden relative">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-                      No Image
-                    </div>
-                  )}
-                  {/* Badge แสดงจำนวนในตะกร้า (ถ้ามี) */}
-                  {cart.find((c) => c.product.id === product.id) && (
-                    <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-md animate-in zoom-in">
-                      {cart.find((c) => c.product.id === product.id)?.quantity}
-                    </div>
-                  )}
-                </div>
+            {products.map((product) => {
+              const inCart = cart.find((c) => c.product.id === product.id);
 
-                <div>
-                  <h3 className="font-semibold text-slate-800 line-clamp-1">
-                    {product.name}
-                  </h3>
-                  <p className="text-slate-500 text-sm">
-                    {product.price.toLocaleString()}.-
-                  </p>
-                </div>
-              </div>
-            ))}
+              return (
+                <Card
+                  key={product.id}
+                  onClick={() => addToCart(product)}
+                  className={`cursor-pointer transition-all hover:shadow-lg active:scale-95 border-2 ${
+                    inCart
+                      ? "border-primary ring-1 ring-primary/20"
+                      : "border-transparent hover:border-slate-200"
+                  }`}
+                >
+                  <CardContent className="p-4 flex flex-col gap-3">
+                    {/* Image Area */}
+                    <div className="aspect-square bg-slate-100 rounded-lg overflow-hidden relative group">
+                      {product.image_url ? (
+                        <img
+                          src={product.image_url}
+                          alt={product.name}
+                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                          No Image
+                        </div>
+                      )}
+
+                      {/* Quantity Badge */}
+                      {inCart && (
+                        <div className="absolute top-2 right-2 animate-in zoom-in duration-200">
+                          <Badge className="h-6 w-6 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-md">
+                            {inCart.quantity}
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Text Info */}
+                    <div>
+                      <h3 className="font-semibold text-slate-800 line-clamp-1 text-sm md:text-base">
+                        {product.name}
+                      </h3>
+                      <p className="text-slate-500 text-sm font-medium">
+                        ฿{product.price.toLocaleString()}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
-        </div>
+        </ScrollArea>
       </div>
 
       {/* --- RIGHT: Cart Sidebar --- */}
-      <div className="w-[350px] bg-white border-l shadow-xl flex flex-col h-full shrink-0 z-20">
-        <div className="h-16 flex items-center justify-between px-4 border-b bg-slate-50 shrink-0">
-          <h2 className="font-semibold text-lg text-slate-700">Current Order</h2>
-          <span className="bg-slate-200 text-slate-600 text-xs px-2 py-1 rounded-full">
+      <div className="w-[380px] bg-white border-l shadow-2xl flex flex-col h-full shrink-0 z-20">
+        <div className="h-16 flex items-center justify-between px-6 border-b bg-slate-50 shrink-0">
+          <h2 className="font-semibold text-lg text-slate-800 flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5" /> Current Order
+          </h2>
+          <Badge variant="outline" className="text-slate-600">
             {cart.reduce((a, b) => a + b.quantity, 0)} Items
-          </span>
+          </Badge>
         </div>
 
         {/* Cart Items List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <ScrollArea className="flex-1 p-4">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-2 opacity-60">
-              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></svg>
-              <p>เลือกเมนูทางซ้ายได้เลย</p>
+            <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
+              <ShoppingBasketIcon />
+              <p className="text-sm font-medium">No items in cart</p>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.product.id} className="flex justify-between items-start p-3 bg-slate-50 rounded-lg border border-slate-100 animate-in slide-in-from-right-5 fade-in duration-300">
-                <div className="flex-1">
-                  <div className="text-slate-800 font-medium">{item.product.name}</div>
-                  <div className="text-slate-500 text-xs mt-1">
-                    {item.product.price} x {item.quantity}
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <div
+                  key={item.product.id}
+                  className="group flex justify-between items-start gap-3 animate-in slide-in-from-right-5 fade-in duration-300"
+                >
+                  {/* Item Info */}
+                  <div className="flex-1 space-y-1">
+                    <div className="text-sm font-semibold text-slate-800">
+                      {item.product.name}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      ฿{item.product.price} x {item.quantity}
+                    </div>
+                  </div>
+
+                  {/* Price & Actions */}
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="font-bold text-slate-800 text-sm">
+                      ฿{(item.product.price * item.quantity).toLocaleString()}
+                    </div>
+
+                    {/* Controls */}
+                    <div className="flex items-center gap-1 bg-slate-100 rounded-md p-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-sm text-red-500 hover:text-red-600 hover:bg-white"
+                        onClick={() => removeFromCart(item.product.id)}
+                      >
+                        {item.quantity === 1 ? (
+                          <Trash2 className="w-3 h-3" />
+                        ) : (
+                          <Minus className="w-3 h-3" />
+                        )}
+                      </Button>
+                      <span className="text-xs font-medium w-4 text-center">
+                        {item.quantity}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 rounded-sm text-blue-600 hover:text-blue-700 hover:bg-white"
+                        onClick={() => addToCart(item.product)} // ต้องส่ง product ตัวเต็มกลับไป
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="font-semibold text-slate-700">
-                    {(item.product.price * item.quantity).toLocaleString()}
-                  </div>
-                  {/* ปุ่มลบ */}
-                  <button 
-                    onClick={() => removeFromCart(item.product.id)}
-                    className="text-red-400 hover:text-red-600 p-1 hover:bg-red-50 rounded"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                  </button>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
-        </div>
+        </ScrollArea>
 
         {/* Footer Payment */}
-        <div className="p-4 bg-slate-50 border-t space-y-3 shrink-0">
-          <div className="flex justify-between text-slate-600 text-sm">
-            <span>Subtotal</span>
-            <span>{totalAmount.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-2xl font-bold text-slate-800">
-            <span>Total</span>
-            <span className="text-blue-600">฿{totalAmount.toLocaleString()}</span>
+        <div className="p-6 bg-slate-50 border-t space-y-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="space-y-2">
+            <div className="flex justify-between text-slate-500 text-sm">
+              <span>Subtotal</span>
+              <span>{totalAmount.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-slate-500 text-sm">
+              <span>Tax (7%)</span>
+              <span>-</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between items-end">
+              <span className="font-semibold text-slate-700">Total</span>
+              <span className="text-2xl font-bold text-primary">
+                ฿{totalAmount.toLocaleString()}
+              </span>
+            </div>
           </div>
 
-          <button
+          <Button
+            className="w-full h-12 text-lg font-bold shadow-lg"
+            size="lg"
             disabled={cart.length === 0}
-            className={`w-full font-bold py-4 rounded-xl text-lg transition-all shadow-lg ${
-              cart.length === 0
-                ? 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                : 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98]'
-            }`}
+            onClick={() => setIsPaymentOpen(true)}
           >
-            {cart.length === 0 ? 'Empty Cart' : `Charge ฿${totalAmount.toLocaleString()}`}
-          </button>
+            {cart.length === 0 ? "Empty Cart" : "Charge Payment"}
+          </Button>
         </div>
       </div>
+      {/* Payment Dialog */}
+      <PaymentDialog
+        isOpen={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        totalAmount={totalAmount}
+        onConfirm={handlePayment}
+        isProcessing={isProcessing}
+      />
     </div>
+  );
+}
+
+// Icon component เล็กๆ สำหรับตอนตะกร้าว่าง
+function ShoppingBasketIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="64"
+      height="64"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m5 11 4-7" />
+      <path d="m19 11-4-7" />
+      <path d="M2 11h20" />
+      <path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8c.9 0 1.8-.7 2-1.6l1.7-7.4" />
+      <path d="m9 11 1 9" />
+      <path d="m4.5 11 .1 9" />
+      <path d="m12 11 2 9" />
+      <path d="m20 11-1 9" />
+    </svg>
   );
 }
