@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "sqlite",
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client\"\n  output   = \"../app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"sqlite\"\n}\n\n// 1. สินค้า (เมนู)\nmodel Product {\n  id        String  @id @default(uuid()) // ใช้ UUID เพื่อความ Pro และปลอดภัย\n  code      String  @unique // รหัสสินค้า (เช่น C001, B002)\n  name      String\n  category  String // Coffee, Non-Coffee, Bakery\n  price     Decimal // ราคาพื้นฐาน\n  image_url String? // รูปภาพ (ถ้ามี)\n  is_active Boolean @default(true) // ปิดเมนูเมื่อของหมด\n\n  // Relation\n  orderItems OrderItem[]\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map(\"products\")\n}\n\n// 2. ลูกค้า (CRM Simple)\nmodel Customer {\n  id          String  @id @default(uuid())\n  phone       String  @unique // ใช้เบอร์โทรเป็นหลัก\n  name        String? // ชื่อเล่น (ถ้าลูกค้าบอก)\n  points      Int     @default(0) // แต้มสะสม\n  total_spent Decimal @default(0) // ยอดรวมที่เคยจ่าย (ไว้คัด VIP)\n\n  // Relation\n  orders Order[]\n\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  @@map(\"customers\")\n}\n\n// 3. ออเดอร์ (Head)\nmodel Order {\n  id           String  @id @default(uuid())\n  total_amount Decimal\n  payment_type String  @default(\"QR\") // QR, CASH\n  status       String  @default(\"PENDING\") // PENDING, PAID, CANCELLED\n  order_type   String  @default(\"DINE_IN\") // DINE_IN, TAKE_AWAY\n\n  // เชื่อมกับลูกค้า (Optional เพราะบางคนอาจไม่เป็นสมาชิก)\n  customer_id String?\n  customer    Customer? @relation(fields: [customer_id], references: [id])\n\n  // รายการสินค้าในบิล\n  items OrderItem[]\n\n  createdAt DateTime @default(now())\n\n  @@map(\"orders\")\n}\n\n// 4. รายการในออเดอร์ (Line Items)\nmodel OrderItem {\n  id       String @id @default(uuid())\n  order_id String\n  order    Order  @relation(fields: [order_id], references: [id])\n\n  product_id String\n  product    Product @relation(fields: [product_id], references: [id])\n\n  name     String // Snapshot ชื่อตอนสั่ง (กันเมนูเปลี่ยนชื่อ)\n  price    Decimal // Snapshot ราคาตอนสั่ง\n  quantity Int\n\n  // *** ทีเด็ด: เก็บ Option หวาน/เย็น/เพิ่มช็อต เป็น JSON ***\n  // ตัวอย่าง: { \"sweetness\": \"50%\", \"type\": \"iced\", \"extra\": [\"shot\"] }\n  // หมายเหตุ: ถ้าใช้ SQLite เปลี่ยนเป็น String แล้ว JSON.stringify เอาแทนได้\n  options String?\n\n  @@map(\"order_items\")\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Product\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"code\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"image_url\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"is_active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"orderItems\",\"kind\":\"object\",\"type\":\"OrderItem\",\"relationName\":\"OrderItemToProduct\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"products\"},\"Customer\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phone\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"points\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"total_spent\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"orders\",\"kind\":\"object\",\"type\":\"Order\",\"relationName\":\"CustomerToOrder\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"customers\"},\"Order\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"total_amount\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"payment_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"status\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"customer_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"customer\",\"kind\":\"object\",\"type\":\"Customer\",\"relationName\":\"CustomerToOrder\"},{\"name\":\"items\",\"kind\":\"object\",\"type\":\"OrderItem\",\"relationName\":\"OrderToOrderItem\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"orders\"},\"OrderItem\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"order\",\"kind\":\"object\",\"type\":\"Order\",\"relationName\":\"OrderToOrderItem\"},{\"name\":\"product_id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"product\",\"kind\":\"object\",\"type\":\"Product\",\"relationName\":\"OrderItemToProduct\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"price\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"quantity\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"options\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":\"order_items\"}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -58,8 +58,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Users
-   * const users = await prisma.user.findMany()
+   * // Fetch zero or more Products
+   * const products = await prisma.product.findMany()
    * ```
    * 
    * Read more in our [docs](https://pris.ly/d/client).
@@ -80,8 +80,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more Products
+ * const products = await prisma.product.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -174,7 +174,45 @@ export interface PrismaClient<
     extArgs: ExtArgs
   }>>
 
-    
+      /**
+   * `prisma.product`: Exposes CRUD operations for the **Product** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Products
+    * const products = await prisma.product.findMany()
+    * ```
+    */
+  get product(): Prisma.ProductDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.customer`: Exposes CRUD operations for the **Customer** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Customers
+    * const customers = await prisma.customer.findMany()
+    * ```
+    */
+  get customer(): Prisma.CustomerDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.order`: Exposes CRUD operations for the **Order** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Orders
+    * const orders = await prisma.order.findMany()
+    * ```
+    */
+  get order(): Prisma.OrderDelegate<ExtArgs, { omit: OmitOpts }>;
+
+  /**
+   * `prisma.orderItem`: Exposes CRUD operations for the **OrderItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrderItems
+    * const orderItems = await prisma.orderItem.findMany()
+    * ```
+    */
+  get orderItem(): Prisma.OrderItemDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

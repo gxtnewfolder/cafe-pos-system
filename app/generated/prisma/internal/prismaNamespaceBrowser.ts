@@ -51,7 +51,10 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-
+  Product: 'Product',
+  Customer: 'Customer',
+  Order: 'Order',
+  OrderItem: 'OrderItem'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -65,4 +68,74 @@ export const TransactionIsolationLevel = {
 } as const
 
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+export const ProductScalarFieldEnum = {
+  id: 'id',
+  code: 'code',
+  name: 'name',
+  category: 'category',
+  price: 'price',
+  image_url: 'image_url',
+  is_active: 'is_active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProductScalarFieldEnum = (typeof ProductScalarFieldEnum)[keyof typeof ProductScalarFieldEnum]
+
+
+export const CustomerScalarFieldEnum = {
+  id: 'id',
+  phone: 'phone',
+  name: 'name',
+  points: 'points',
+  total_spent: 'total_spent',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type CustomerScalarFieldEnum = (typeof CustomerScalarFieldEnum)[keyof typeof CustomerScalarFieldEnum]
+
+
+export const OrderScalarFieldEnum = {
+  id: 'id',
+  total_amount: 'total_amount',
+  payment_type: 'payment_type',
+  status: 'status',
+  order_type: 'order_type',
+  customer_id: 'customer_id',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderScalarFieldEnum = (typeof OrderScalarFieldEnum)[keyof typeof OrderScalarFieldEnum]
+
+
+export const OrderItemScalarFieldEnum = {
+  id: 'id',
+  order_id: 'order_id',
+  product_id: 'product_id',
+  name: 'name',
+  price: 'price',
+  quantity: 'quantity',
+  options: 'options'
+} as const
+
+export type OrderItemScalarFieldEnum = (typeof OrderItemScalarFieldEnum)[keyof typeof OrderItemScalarFieldEnum]
+
+
+export const SortOrder = {
+  asc: 'asc',
+  desc: 'desc'
+} as const
+
+export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

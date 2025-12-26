@@ -12,3 +12,80 @@ generator client {
 datasource db {
   provider = "sqlite"
 }
+
+// 1. สินค้า (เมนู)
+model Product {
+  id          String   @id @default(uuid()) // ใช้ UUID เพื่อความ Pro และปลอดภัย
+  code        String   @unique // รหัสสินค้า (เช่น C001, B002)
+  name        String
+  category    String   // Coffee, Non-Coffee, Bakery
+  price       Decimal  // ราคาพื้นฐาน
+  image_url   String?  // รูปภาพ (ถ้ามี)
+  is_active   Boolean  @default(true) // ปิดเมนูเมื่อของหมด
+  
+  // Relation
+  orderItems  OrderItem[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("products")
+}
+
+// 2. ลูกค้า (CRM Simple)
+model Customer {
+  id          String   @id @default(uuid())
+  phone       String   @unique // ใช้เบอร์โทรเป็นหลัก
+  name        String?  // ชื่อเล่น (ถ้าลูกค้าบอก)
+  points      Int      @default(0) // แต้มสะสม
+  total_spent Decimal  @default(0) // ยอดรวมที่เคยจ่าย (ไว้คัด VIP)
+  
+  // Relation
+  orders      Order[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("customers")
+}
+
+// 3. ออเดอร์ (Head)
+model Order {
+  id            String    @id @default(uuid())
+  total_amount  Decimal   
+  payment_type  String    @default("QR") // QR, CASH
+  status        String    @default("PENDING") // PENDING, PAID, CANCELLED
+  order_type    String    @default("DINE_IN") // DINE_IN, TAKE_AWAY
+  
+  // เชื่อมกับลูกค้า (Optional เพราะบางคนอาจไม่เป็นสมาชิก)
+  customer_id   String?
+  customer      Customer? @relation(fields: [customer_id], references: [id])
+  
+  // รายการสินค้าในบิล
+  items         OrderItem[]
+
+  createdAt     DateTime  @default(now())
+  
+  @@map("orders")
+}
+
+// 4. รายการในออเดอร์ (Line Items)
+model OrderItem {
+  id          String   @id @default(uuid())
+  order_id    String
+  order       Order    @relation(fields: [order_id], references: [id])
+  
+  product_id  String
+  product     Product  @relation(fields: [product_id], references: [id])
+  
+  name        String   // Snapshot ชื่อตอนสั่ง (กันเมนูเปลี่ยนชื่อ)
+  price       Decimal  // Snapshot ราคาตอนสั่ง
+  quantity    Int
+  
+  // *** ทีเด็ด: เก็บ Option หวาน/เย็น/เพิ่มช็อต เป็น JSON ***
+  // ตัวอย่าง: { "sweetness": "50%", "type": "iced", "extra": ["shot"] }
+  // หมายเหตุ: ถ้าใช้ SQLite เปลี่ยนเป็น String แล้ว JSON.stringify เอาแทนได้
+  options     String?  
+  
+  @@map("order_items")
+}
