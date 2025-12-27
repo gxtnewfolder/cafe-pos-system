@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { validateProductUpdate, validateProductPatch } from "@/lib/validation";
 
 // ✅ 1. แก้ Type ตรงนี้: params เป็น Promise
 type Props = {
@@ -12,6 +13,7 @@ export async function PUT(
   req: Request,
   props: Props
 ) {
+export async function PUT(req: Request, props: Props) {
   try {
     const params = await props.params;
     const id = params.id;
@@ -52,6 +54,10 @@ export async function PUT(
         { error: "Price cannot be negative" },
         { status: 400 }
       );
+    // ✅ Use centralized validation service
+    const validation = validateProductUpdate(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // ✅ Validation: Stock is numeric and non-negative
@@ -94,9 +100,17 @@ export async function PUT(
         image_url: body.image_url || null,
         stock: stock,
         is_active: typeof body.is_active === 'boolean' ? body.is_active : true,
+        name: validation.data!.name,
+        code: validation.data!.code,
+        price: validation.data!.price,
+        category: validation.data!.category,
+        image_url: validation.data!.image_url || null,
+        stock: validation.data!.stock,
+        is_active: validation.data!.is_active ?? true,
       },
     });
 
+    revalidatePath("/");
     return NextResponse.json(updatedProduct);
   } catch (error: any) {
     if (error.code === 'P2025') {
@@ -112,6 +126,7 @@ export async function PUT(
   }
 }
 
+// PATCH: Partial Update
 export async function PATCH(req: Request, props: Props) {
   try {
     // ✅ 2. ต้อง await params ก่อนใช้งาน
@@ -120,35 +135,10 @@ export async function PATCH(req: Request, props: Props) {
 
     const body = await req.json();
 
-    // ✅ Validation: Validate category if provided (case-insensitive)
-    if (body.category !== undefined && body.category !== null) {
-      const validCategoriesLower = ['coffee', 'non-coffee', 'bakery'];
-      const categoryLower = String(body.category).toLowerCase();
-      if (!validCategoriesLower.includes(categoryLower)) {
-        return NextResponse.json(
-          { error: `Invalid category. Must be one of: ${validCategoriesLower.join(', ')}` },
-          { status: 400 }
-        );
-      }
-      // normalize for saving
-      body.category = categoryLower;
-    }
-
-    // ✅ Validation: Price if provided
-    if (body.price !== undefined && body.price !== null) {
-      const price = Number(body.price);
-      if (isNaN(price)) {
-        return NextResponse.json(
-          { error: "Price must be a valid number" },
-          { status: 400 }
-        );
-      }
-      if (price < 0) {
-        return NextResponse.json(
-          { error: "Price cannot be negative" },
-          { status: 400 }
-        );
-      }
+    // ✅ Use centralized validation service
+    const validation = validateProductPatch(body);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
     // ✅ Validation: Stock if provided
