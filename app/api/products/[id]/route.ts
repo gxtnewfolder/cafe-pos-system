@@ -7,12 +7,18 @@ type Props = {
 };
 
 // PUT: แก้ไขสินค้า
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  req: Request,
+  props: Props
+) {
   try {
+    const params = await props.params;
+    const id = params.id;
+    
     const body = await req.json();
     
     const updatedProduct = await prisma.product.update({
-      where: { id: params.id },
+      where: { id }, // ใช้ id ที่ await มาแล้ว
       data: {
         name: body.name,
         code: body.code,
