@@ -6,6 +6,30 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+// PUT: แก้ไขสินค้า
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const body = await req.json();
+    
+    const updatedProduct = await prisma.product.update({
+      where: { id: params.id },
+      data: {
+        name: body.name,
+        code: body.code,
+        price: Number(body.price),
+        category: body.category,
+        image_url: body.image_url,
+        stock: Number(body.stock),
+        is_active: body.is_active, 
+      },
+    });
+
+    return NextResponse.json(updatedProduct);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: Request, props: Props) {
   try {
     // ✅ 2. ต้อง await params ก่อนใช้งาน
