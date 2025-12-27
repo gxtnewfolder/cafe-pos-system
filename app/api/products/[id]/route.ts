@@ -28,11 +28,12 @@ export async function PUT(
       );
     }
 
-    // ✅ Validation: Valid categories
-    const validCategories = ['Coffee', 'Non-Coffee', 'Bakery'];
-    if (!validCategories.includes(body.category)) {
+    // ✅ Validation: Valid categories (case-insensitive)
+    const validCategoriesLower = ['coffee', 'non-coffee', 'bakery'];
+    const categoryLower = String(body.category).toLowerCase();
+    if (!validCategoriesLower.includes(categoryLower)) {
       return NextResponse.json(
-        { error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
+        { error: `Invalid category. Must be one of: ${validCategoriesLower.join(', ')}` },
         { status: 400 }
       );
     }
@@ -88,7 +89,7 @@ export async function PUT(
         name: body.name.trim(),
         code: body.code.trim(),
         price: price,
-        category: body.category,
+        category: categoryLower,
         image_url: body.image_url || null,
         stock: stock,
         is_active: typeof body.is_active === 'boolean' ? body.is_active : true,
@@ -118,15 +119,18 @@ export async function PATCH(req: Request, props: Props) {
 
     const body = await req.json();
 
-    // ✅ Validation: Validate category if provided
+    // ✅ Validation: Validate category if provided (case-insensitive)
     if (body.category !== undefined && body.category !== null) {
-      const validCategories = ['Coffee', 'Non-Coffee', 'Bakery'];
-      if (!validCategories.includes(body.category)) {
+      const validCategoriesLower = ['coffee', 'non-coffee', 'bakery'];
+      const categoryLower = String(body.category).toLowerCase();
+      if (!validCategoriesLower.includes(categoryLower)) {
         return NextResponse.json(
-          { error: `Invalid category. Must be one of: ${validCategories.join(', ')}` },
+          { error: `Invalid category. Must be one of: ${validCategoriesLower.join(', ')}` },
           { status: 400 }
         );
       }
+      // normalize for saving
+      body.category = categoryLower;
     }
 
     // ✅ Validation: Price if provided
