@@ -1,6 +1,8 @@
 import prisma from "@/lib/db";
 import POSScreen from "./components/POSScreen"; // Import ตัวที่เราเพิ่งสร้าง
 
+export const dynamic = 'force-dynamic';
+
 // ดึงข้อมูลฝั่ง Server
 async function getProducts() {
   const products = await prisma.product.findMany({

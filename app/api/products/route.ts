@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db"; // import จากไฟล์ที่คุณมี
+import { revalidatePath } from "next/cache";
 
 export async function GET() {
   try {
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
         is_active: true
       }
     });
+    revalidatePath("/");
     return NextResponse.json(newProduct);
   } catch (error) {
     return NextResponse.json({ error: "Failed" }, { status: 500 });

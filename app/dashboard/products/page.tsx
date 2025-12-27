@@ -9,6 +9,7 @@ import {
   Package,
   CheckCircle,
   XCircle,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +61,11 @@ export default function ProductsPage() {
     is_active: true,
   });
 
+  // Stock Dialog State
+  const [isStockOpen, setIsStockOpen] = useState(false);
+  const [stockProductId, setStockProductId] = useState<string | null>(null);
+  const [stockToAdd, setStockToAdd] = useState<number>(0);
+
   // 1. Fetch Products
   const fetchProducts = async () => {
     const res = await fetch("/api/products");
@@ -107,6 +113,44 @@ export default function ProductsPage() {
       fetchProducts();
     } catch (e) {
       toast.error("ลบไม่สำเร็จ");
+    }
+  };
+
+  // 4. Handle Quick Stock Update
+  const openStockDialog = (p: Product) => {
+    setStockProductId(p.id);
+    setStockToAdd(0);
+    setIsStockOpen(true);
+  };
+
+  const handleStockUpdate = async () => {
+    if (!stockProductId) return;
+    try {
+      // Fetch current product to get latest stock first (safer)
+      // But for Quick Add, we can just PATCH with new absolute value?
+      // Or we can just calculate client side. Let's calculate client side for simplicity
+      const product = products.find(p => p.id === stockProductId);
+      if (!product) return;
+
+      const newStock = product.stock + stockToAdd;
+      if (newStock < 0) {
+        toast.error("Stock cannot be negative");
+        return;
+      }
+
+      const res = await fetch(`/api/products/${stockProductId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: newStock }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      toast.success("Stock updated successfully");
+      setIsStockOpen(false);
+      fetchProducts();
+    } catch (e) {
+      toast.error("Failed to update stock");
     }
   };
 
@@ -215,6 +259,14 @@ export default function ProductsPage() {
                     onClick={() => openEdit(p)}
                   >
                     <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => openStockDialog(p)}
+                    title="Add Stock"
+                  >
+                    <Package className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="destructive"
@@ -326,6 +378,48 @@ export default function ProductsPage() {
               บันทึกข้อมูล
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Quick Stock Dialog */}
+      <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
+        <DialogContent className="max-w-sm">
+           <DialogHeader>
+             <DialogTitle>เพิ่ม/ลด สต็อกสินค้า</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
+             <div className="flex items-center justify-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev - 1)}>
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <div className="text-center w-20">
+                   <div className="text-3xl font-bold">{stockToAdd > 0 ? `+${stockToAdd}` : stockToAdd}</div>
+                   <p className="text-xs text-slate-500">Inventory change</p>
+                </div>
+                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev + 1)}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+             </div>
+             
+             <div className="grid grid-cols-3 gap-2">
+                {[5, 10, 20, 50].map(num => (
+                  <Button key={num} variant="outline" size="sm" onClick={() => setStockToAdd(num)}>
+                    +{num}
+                  </Button>
+                ))}
+                <Button variant="outline" size="sm" className="col-span-2" onClick={() => setStockToAdd(0)}>Reset</Button>
+             </div>
+
+             <div className="bg-slate-50 p-3 rounded-lg text-center text-sm">
+                Current Stock: <span className="font-bold">{products.find(p => p.id === stockProductId)?.stock || 0}</span>
+                <span className="mx-2">→</span>
+                New Stock: <span className="font-bold text-blue-600">{(products.find(p => p.id === stockProductId)?.stock || 0) + stockToAdd}</span>
+             </div>
+
+             <Button className="w-full" onClick={handleStockUpdate}>
+                Confirm Update
+             </Button>
+           </div>
         </DialogContent>
       </Dialog>
     </div>

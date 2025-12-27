@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 // ✅ 1. แก้ Type ตรงนี้: params เป็น Promise
 type Props = {
@@ -201,6 +202,7 @@ export async function PATCH(req: Request, props: Props) {
       where: { id },
       data: updateData,
     });
+    revalidatePath("/");
     return NextResponse.json(updated);
   } catch (error: any) {
     if (error.code === 'P2025') {
@@ -226,6 +228,7 @@ export async function DELETE(req: Request, props: Props) {
       where: { id },
       data: { is_active: false },
     });
+    revalidatePath("/");
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
