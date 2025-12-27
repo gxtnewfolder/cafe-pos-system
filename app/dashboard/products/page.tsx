@@ -199,10 +199,10 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-8 space-y-4 md:space-y-6">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
           <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
         </div>
         <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
@@ -211,6 +211,7 @@ export default function ProductsPage() {
       </div>
 
       <Card className="shadow-smooth border-0 bg-white overflow-hidden">
+        <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -290,6 +291,7 @@ export default function ProductsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </Card>
 
       {/* Dialog Form */}
