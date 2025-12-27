@@ -108,7 +108,7 @@ export default function POSScreen({ products }: POSScreenProps) {
 
       // ✅ 2. เคลียร์ตะกร้า
       setCart([]);
-      // setSelectedCustomer(null); // (Optional) Logout ลูกค้า
+      setSelectedCustomer(null); // (Optional) Logout ลูกค้า
 
       // ❌ ไม่ต้องปิด Dialog แล้ว ( setIsPaymentOpen(false) ลบออก )
       // ให้ Dialog มัน Re-render เป็นหน้า Success แทน เพราะเราส่ง successOrder ไปให้มัน
