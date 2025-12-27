@@ -6,52 +6,93 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { items, totalAmount, paymentType, customerId } = body;
 
-    // 1. คำนวณแต้มที่จะได้ (สมมติ 1 แก้ว = 1 แต้ม)
+    // 1. คำนวณแต้มที่จะได้ (Logic เดิม)
     const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
     const pointsEarned = totalItems;
 
-    // 2. สร้าง Order พร้อมเชื่อม Customer และ Update แต้ม
-    const order = await prisma.order.create({
-      data: {
-        total_amount: totalAmount,
-        payment_type: paymentType || "QR",
-        status: "PAID", 
-        order_type: "DINE_IN", 
-        
-        // เชื่อมลูกค้า (ถ้ามี)
-        customer_id: customerId || null,
-        
-        // 3. สร้าง OrderItems (รายการสินค้าในบิล) พร้อมกันเลย
-        items: {
-          create: items.map((item: any) => ({
-            product_id: item.product.id,
-            name: item.product.name,
-            price: item.product.price, // บันทึกราคา ณ ตอนขาย
-            quantity: item.quantity,
-            options: item.options ? JSON.stringify(item.options) : undefined
-          }))
-        }
-      }
-    });
+    // ✅ ใช้ Transaction: ทำทุกอย่างพร้อมกัน (ตัดของ + สร้างบิล + ให้แต้ม)
+    // ถ้าขั้นตอนไหนพัง (เช่น ของหมด) จะ Rollback ทั้งหมด ไม่มีการตัดเงินฟรี
+    const result = await prisma.$transaction(async (tx) => {
 
-    // 4. อัปเดตแต้มลูกค้า (Update Transaction)
-    if (customerId) {
-      await prisma.customer.update({
-        where: { id: customerId },
+      // ---------------------------------------------------------
+      // 2. (NEW) วนลูปเช็คสต็อกและตัดสต็อกสินค้าทีละตัว
+      // ---------------------------------------------------------
+      for (const item of items) {
+        const productId = item.product.id; // อิงตาม structure เดิมของคุณ
+        const quantity = item.quantity;
+
+        // ดึงข้อมูลสินค้าล่าสุดจาก DB (ผ่าน tx)
+        const productInDb = await tx.product.findUnique({
+          where: { id: productId }
+        });
+
+        if (!productInDb) {
+          throw new Error(`ไม่พบสินค้า ID: ${productId} ในระบบ`);
+        }
+
+        // เช็คว่าพอขายไหม
+        if (productInDb.stock < quantity) {
+          throw new Error(`สินค้า "${productInDb.name}" ของหมด! (เหลือ ${productInDb.stock})`);
+        }
+
+        // ตัดสต็อก
+        await tx.product.update({
+          where: { id: productId },
+          data: { stock: { decrement: quantity } }
+        });
+      }
+
+      // ---------------------------------------------------------
+      // 3. สร้าง Order (Logic เดิม แต่เปลี่ยนจาก prisma -> tx)
+      // ---------------------------------------------------------
+      const newOrder = await tx.order.create({
         data: {
-          points: { increment: pointsEarned },      // เพิ่มแต้ม
-          total_spent: { increment: totalAmount },  // เพิ่มยอดสะสม
+          total_amount: totalAmount,
+          payment_type: paymentType || "QR",
+          status: "PAID",
+          order_type: "DINE_IN",
+          
+          // เชื่อมลูกค้า (ถ้ามี)
+          customer_id: customerId || null,
+          
+          // สร้าง OrderItems
+          items: {
+            create: items.map((item: any) => ({
+              product_id: item.product.id,
+              name: item.product.name,
+              price: item.product.price,
+              quantity: item.quantity,
+              options: item.options ? JSON.stringify(item.options) : undefined
+            }))
+          }
         }
       });
-    }
 
-    return NextResponse.json({ success: true, orderId: order.id });
+      // ---------------------------------------------------------
+      // 4. อัปเดตแต้มลูกค้า (Logic เดิม แต่เปลี่ยนจาก prisma -> tx)
+      // ---------------------------------------------------------
+      if (customerId) {
+        await tx.customer.update({
+          where: { id: customerId },
+          data: {
+            points: { increment: pointsEarned },      // เพิ่มแต้ม
+            total_spent: { increment: totalAmount },  // เพิ่มยอดสะสม
+          }
+        });
+      }
 
-  } catch (error) {
+      return newOrder;
+    });
+
+    return NextResponse.json({ success: true, orderId: result.id });
+
+  } catch (error: any) {
     console.error("Create Order Error:", error);
+    
+    // ส่ง Error Message กลับไปหน้าบ้าน (เช่น "สินค้า xx ของหมด")
     return NextResponse.json(
-      { error: "Failed to create order" },
-      { status: 500 }
+      { error: error.message || "Failed to create order" },
+      { status: 400 } // ใช้ 400 Bad Request แทน 500 เพื่อให้ Frontend รู้ว่าเป็น Error จาก Business Logic
     );
   }
 }

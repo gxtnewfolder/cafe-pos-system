@@ -22,6 +22,7 @@ model Product {
   price       Decimal  // ราคาพื้นฐาน
   image_url   String?  // รูปภาพ (ถ้ามี)
   is_active   Boolean  @default(true) // ปิดเมนูเมื่อของหมด
+  stock       Int      @default(0)
   
   // Relation
   orderItems  OrderItem[]
@@ -88,4 +89,14 @@ model OrderItem {
   options     String?  
   
   @@map("order_items")
+}
+// 5. ผู้ใช้งานระบบ (Admin/Staff)
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  password  String   // เก็บแบบ Hash
+  name      String?
+  role      String   @default("STAFF") // ADMIN, STAFF
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

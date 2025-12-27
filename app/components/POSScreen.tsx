@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import PaymentDialog from "./PaymentDialog";
 import { Product } from "@/app/generated/prisma/client";
 import MemberDialog from "./MemberDialog";
-import { User, LogOut, Package } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Package,
+  LayoutDashboard,
+  Loader2,
+  Plus,
+  Minus,
+  Trash2,
+  ShoppingCart,
+} from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
-import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { LayoutDashboard } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -18,7 +28,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 
-type ProductWithNumber = Omit<Product, "price"> & { price: number };
+type ProductWithNumber = Omit<Product, "price"> & {
+  price: number;
+  stock: number;
+};
 
 type CartItem = {
   product: ProductWithNumber;
@@ -32,10 +45,8 @@ type POSScreenProps = {
 
 export default function POSScreen({ products }: POSScreenProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
-
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null
   );
@@ -46,9 +57,28 @@ export default function POSScreen({ products }: POSScreenProps) {
     date: Date;
   } | null>(null);
 
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
   const addToCart = (product: ProductWithNumber) => {
+    if (product.stock <= 0) return;
+
     setCart((prev) => {
       const existingItem = prev.find((item) => item.product.id === product.id);
+
+      if (existingItem && existingItem.quantity >= product.stock) {
+        toast.error("สินค้าหมดสต็อก", {
+          description: `มีสินค้าเพียง ${product.stock} ชิ้น`,
+        });
+        return prev;
+      }
+
       if (existingItem) {
         return prev.map((item) =>
           item.product.id === product.id
@@ -81,6 +111,10 @@ export default function POSScreen({ products }: POSScreenProps) {
     0
   );
 
+  const refreshProducts = () => {
+    window.location.reload();
+  };
+
   const handlePayment = async () => {
     setIsProcessing(true);
     try {
@@ -95,38 +129,46 @@ export default function POSScreen({ products }: POSScreenProps) {
         }),
       });
 
-      if (!response.ok) throw new Error("Payment failed");
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error);
+      }
       const data = await response.json();
 
-      // ✅ 1. เก็บข้อมูลออเดอร์สำเร็จไว้ก่อนเคลียร์ตะกร้า
-      const currentItems = [...cart]; // copy items ไว้ก่อน
+      const currentItems = [...cart];
       setSuccessOrder({
         orderId: data.orderId,
         items: currentItems,
         date: new Date(),
       });
 
-      // ✅ 2. เคลียร์ตะกร้า
       setCart([]);
-      setSelectedCustomer(null); // (Optional) Logout ลูกค้า
-
-      // ❌ ไม่ต้องปิด Dialog แล้ว ( setIsPaymentOpen(false) ลบออก )
-      // ให้ Dialog มัน Re-render เป็นหน้า Success แทน เพราะเราส่ง successOrder ไปให้มัน
+      setSelectedCustomer(null);
+      refreshProducts();
 
       toast.success("บันทึกออเดอร์สำเร็จ!");
-    } catch (error) {
-      console.error(error);
-      toast.error("เกิดข้อผิดพลาด");
+    } catch (error: any) {
+      toast.error("ทำรายการไม่สำเร็จ", { description: error.message });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // ✅ ฟังก์ชันตอนปิด Dialog ให้เคลียร์ค่า successOrder ทิ้งด้วย
   const handleClosePayment = () => {
     setIsPaymentOpen(false);
-    setTimeout(() => setSuccessOrder(null), 300); // delay นิดนึงให้ปิด animation จบก่อนค่อย reset
+    setTimeout(() => setSuccessOrder(null), 300);
   };
+
+  if (status === "loading") {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <span className="ml-2 text-slate-500">กำลังโหลดระบบ...</span>
+      </div>
+    );
+  }
+
+  if (!session) return null;
 
   return (
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
@@ -136,30 +178,30 @@ export default function POSScreen({ products }: POSScreenProps) {
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             ☕ Pocket Café <Badge variant="secondary">POS</Badge>
           </h1>
-          <Link href="/dashboard">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-500 hover:text-slate-900"
-            >
-              <LayoutDashboard className="w-4 h-4 mr-2" />
-              หลังบ้าน
-            </Button>
-          </Link>
 
-          {/* 👇 ปุ่มทางลัดไปแก้สินค้า */}
-          <Link href="/dashboard/products">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-500 hover:text-slate-900"
-            >
-              <Package className="w-4 h-4 mr-2" />
-              สินค้า
-            </Button>
-          </Link>
-          {/* <div className="text-sm text-slate-500">Staff: Admin</div> */}
-          {/* ส่วนแสดงสมาชิก / ปุ่ม Login */}
+          <div className="flex items-center gap-2">
+            <Link href="/dashboard">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-500 hover:text-slate-900"
+              >
+                <LayoutDashboard className="w-4 h-4 mr-2" />
+                หลังบ้าน
+              </Button>
+            </Link>
+            <Link href="/dashboard/products">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-500 hover:text-slate-900"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                สินค้า
+              </Button>
+            </Link>
+          </div>
+
           <div className="flex items-center gap-3">
             {selectedCustomer ? (
               <div className="flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 animate-in slide-in-from-right">
@@ -190,23 +232,39 @@ export default function POSScreen({ products }: POSScreenProps) {
               </Button>
             )}
           </div>
+
+          <div className="flex items-center gap-2 border-l pl-4 ml-2">
+            <span className="text-sm text-slate-500">
+              {session?.user?.name} ({session?.user?.email})
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={() => signOut()}
+            >
+              Logout
+            </Button>
+          </div>
         </header>
 
-        {/* ใช้ ScrollArea ของ shadcn แทน div overflow-auto */}
         <ScrollArea className="flex-1 p-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
             {products.map((product) => {
               const inCart = cart.find((c) => c.product.id === product.id);
+              const isOutOfStock = product.stock <= 0;
 
               return (
                 <Card
                   key={product.id}
-                  onClick={() => addToCart(product)}
-                  className={`cursor-pointer transition-all hover:shadow-lg active:scale-95 border-2 ${
-                    inCart
-                      ? "border-primary ring-1 ring-primary/20"
-                      : "border-transparent hover:border-slate-200"
-                  }`}
+                  onClick={() => {
+                    if (!isOutOfStock) addToCart(product);
+                  }}
+                  className={`transition-all border-2 ${
+                    isOutOfStock
+                      ? "opacity-60 grayscale cursor-not-allowed border-slate-100 bg-slate-50"
+                      : "cursor-pointer hover:shadow-lg active:scale-95 border-transparent hover:border-slate-200"
+                  } ${inCart ? "border-primary ring-1 ring-primary/20" : ""}`}
                 >
                   <CardContent className="p-4 flex flex-col gap-3">
                     {/* Image Area */}
@@ -223,10 +281,22 @@ export default function POSScreen({ products }: POSScreenProps) {
                         </div>
                       )}
 
+                      {/* ✅ Stock Badge - โชว์เฉพาะตอน Sold Out */}
+                      {isOutOfStock && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <Badge
+                            variant="destructive"
+                            className="shadow-md font-bold"
+                          >
+                            Sold Out
+                          </Badge>
+                        </div>
+                      )}
+
                       {/* Quantity Badge */}
                       {inCart && (
-                        <div className="absolute top-2 right-2 animate-in zoom-in duration-200">
-                          <Badge className="h-6 w-6 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-md">
+                        <div className="absolute top-2 right-2 animate-in zoom-in duration-200 z-10">
+                          <Badge className="h-6 w-6 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-md ring-2 ring-white">
                             {inCart.quantity}
                           </Badge>
                         </div>
@@ -235,10 +305,18 @@ export default function POSScreen({ products }: POSScreenProps) {
 
                     {/* Text Info */}
                     <div>
-                      <h3 className="font-semibold text-slate-800 line-clamp-1 text-sm md:text-base">
+                      <h3
+                        className={`font-semibold line-clamp-1 text-sm md:text-base ${
+                          isOutOfStock ? "text-slate-400" : "text-slate-800"
+                        }`}
+                      >
                         {product.name}
                       </h3>
-                      <p className="text-slate-500 text-sm font-medium">
+                      <p
+                        className={`text-sm font-medium ${
+                          isOutOfStock ? "text-slate-400" : "text-slate-500"
+                        }`}
+                      >
                         ฿{product.price.toLocaleString()}
                       </p>
                     </div>
@@ -261,7 +339,6 @@ export default function POSScreen({ products }: POSScreenProps) {
           </Badge>
         </div>
 
-        {/* Cart Items List */}
         <ScrollArea className="flex-1 p-4">
           {cart.length === 0 ? (
             <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
@@ -275,7 +352,6 @@ export default function POSScreen({ products }: POSScreenProps) {
                   key={item.product.id}
                   className="group flex justify-between items-start gap-3 animate-in slide-in-from-right-5 fade-in duration-300"
                 >
-                  {/* Item Info */}
                   <div className="flex-1 space-y-1">
                     <div className="text-sm font-semibold text-slate-800">
                       {item.product.name}
@@ -284,14 +360,10 @@ export default function POSScreen({ products }: POSScreenProps) {
                       ฿{item.product.price} x {item.quantity}
                     </div>
                   </div>
-
-                  {/* Price & Actions */}
                   <div className="flex flex-col items-end gap-2">
                     <div className="font-bold text-slate-800 text-sm">
                       ฿{(item.product.price * item.quantity).toLocaleString()}
                     </div>
-
-                    {/* Controls */}
                     <div className="flex items-center gap-1 bg-slate-100 rounded-md p-0.5">
                       <Button
                         variant="ghost"
@@ -312,7 +384,8 @@ export default function POSScreen({ products }: POSScreenProps) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 rounded-sm text-blue-600 hover:text-blue-700 hover:bg-white"
-                        onClick={() => addToCart(item.product)} // ต้องส่ง product ตัวเต็มกลับไป
+                        onClick={() => addToCart(item.product)}
+                        disabled={item.quantity >= item.product.stock}
                       >
                         <Plus className="w-3 h-3" />
                       </Button>
@@ -324,7 +397,6 @@ export default function POSScreen({ products }: POSScreenProps) {
           )}
         </ScrollArea>
 
-        {/* Footer Payment */}
         <div className="p-6 bg-slate-50 border-t space-y-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <div className="space-y-2">
             <div className="flex justify-between text-slate-500 text-sm">
@@ -343,7 +415,6 @@ export default function POSScreen({ products }: POSScreenProps) {
               </span>
             </div>
           </div>
-
           <Button
             className="w-full h-12 text-lg font-bold shadow-lg"
             size="lg"
@@ -354,7 +425,7 @@ export default function POSScreen({ products }: POSScreenProps) {
           </Button>
         </div>
       </div>
-      {/* Payment Dialog */}
+
       <PaymentDialog
         isOpen={isPaymentOpen}
         onClose={handleClosePayment}
@@ -364,7 +435,6 @@ export default function POSScreen({ products }: POSScreenProps) {
         successData={successOrder}
       />
 
-      {/* Member Dialog */}
       <MemberDialog
         isOpen={isMemberOpen}
         onClose={() => setIsMemberOpen(false)}
@@ -374,7 +444,6 @@ export default function POSScreen({ products }: POSScreenProps) {
   );
 }
 
-// Icon component เล็กๆ สำหรับตอนตะกร้าว่าง
 function ShoppingBasketIcon() {
   return (
     <svg
