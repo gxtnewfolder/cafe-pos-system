@@ -1,7 +1,29 @@
 // Product Validation Service
 // Centralized validation for product API
 
+// Valid categories (lowercase for comparison)
 const VALID_CATEGORIES = ['coffee', 'non-coffee', 'bakery'];
+
+// Map lowercase to display-friendly names
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  'coffee': 'COFFEE',
+  'non-coffee': 'NON_COFFEE',
+  'bakery': 'BAKERY',
+};
+
+/**
+ * Normalize category to display-friendly name
+ * Input can be any case, output will be proper format for storage
+ */
+function normalizeCategory(category: string): string | null {
+  const lower = category.toLowerCase().trim();
+  // Handle underscore variant (NON_COFFEE -> non-coffee)
+  const normalized = lower.replace('_', '-');
+  if (VALID_CATEGORIES.includes(normalized)) {
+    return CATEGORY_DISPLAY_NAMES[normalized];
+  }
+  return null;
+}
 
 export type ValidationResult<T = any> = {
   success: boolean;
@@ -55,9 +77,9 @@ export function validateProductCreate(body: any): ValidationResult<ProductCreate
   }
 
   // Category
-  const categoryLower = String(body.category).toLowerCase();
-  if (!VALID_CATEGORIES.includes(categoryLower)) {
-    return { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` };
+  const normalizedCategory = normalizeCategory(String(body.category));
+  if (!normalizedCategory) {
+    return { success: false, error: `Invalid category. Must be one of: Coffee, Non-Coffee, Bakery` };
   }
 
   // Stock (optional, defaults to 0)
@@ -78,7 +100,7 @@ export function validateProductCreate(body: any): ValidationResult<ProductCreate
       name: body.name.trim(),
       code: body.code.trim(),
       price,
-      category: categoryLower,
+      category: normalizedCategory,
       stock,
       image_url: body.image_url || undefined,
       is_active: typeof body.is_active === 'boolean' ? body.is_active : true,
@@ -140,11 +162,11 @@ export function validateProductPatch(body: any): ValidationResult<ProductUpdateD
 
   // Category (if provided)
   if (body.category !== undefined && body.category !== null) {
-    const categoryLower = String(body.category).toLowerCase();
-    if (!VALID_CATEGORIES.includes(categoryLower)) {
-      return { success: false, error: `Invalid category. Must be one of: ${VALID_CATEGORIES.join(', ')}` };
+    const normalizedCategory = normalizeCategory(String(body.category));
+    if (!normalizedCategory) {
+      return { success: false, error: `Invalid category. Must be one of: Coffee, Non-Coffee, Bakery` };
     }
-    data.category = categoryLower;
+    data.category = normalizedCategory;
   }
 
   // Stock (if provided)

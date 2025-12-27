@@ -55,17 +55,17 @@ export default function PaymentDialog({
   };
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="w-[90%] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto gap-6">
+      <DialogContent className="w-[90%] max-w-md rounded-2xl max-h-[90vh] overflow-y-auto gap-6 shadow-smooth-lg border-0">
         {/* --- 1. หน้า Success (แสดงหลังจ่ายเงิน) --- */}
         {isSuccess && successData ? (
-          <div className="flex flex-col items-center justify-center py-6 animate-in zoom-in-95 duration-300">
-            <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle2 className="h-10 w-10 text-green-600" />
+          <div className="flex flex-col items-center justify-center py-8 animate-in zoom-in-95 duration-300">
+            <div className="h-24 w-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mb-5 shadow-lg animate-float">
+              <CheckCircle2 className="h-12 w-12 text-green-600" />
             </div>
             <DialogTitle className="text-2xl font-bold text-green-700 mb-2">
               Payment Successful!
             </DialogTitle>
-            <p className="text-slate-500 mb-6">บันทึกยอดขายเรียบร้อยแล้ว</p>
+            <p className="text-slate-500 mb-8">บันทึกยอดขายเรียบร้อยแล้ว</p>
 
             <div className="flex flex-col gap-3 w-full">
               {/* ปุ่ม Download PDF */}
@@ -84,7 +84,7 @@ export default function PaymentDialog({
                 {/* @ts-ignore */}
                 {({ loading }) => (
                   <Button
-                    className="w-full h-12 text-lg gap-2"
+                    className="w-full h-14 text-lg gap-2 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 shadow-sm transition-all hover:shadow-md"
                     variant="outline"
                     disabled={loading}
                   >
@@ -100,27 +100,27 @@ export default function PaymentDialog({
 
               <Button
                 onClick={handleClose}
-                className="w-full h-12 text-lg bg-slate-900 text-white hover:bg-slate-800"
+                className="w-full h-14 text-lg bg-slate-800 text-white hover:bg-slate-900 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
-                ปิดหน้าต่าง (Next Order)
+                ปิดหน้าต่าง (Next Order) →
               </Button>
             </div>
           </div>
         ) : (
           /* --- 2. หน้า QR Code (ปกติ) --- */
           <>
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl sm:text-2xl font-bold">
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-center text-xl sm:text-2xl font-bold text-slate-800">
                 Payment
               </DialogTitle>
-              <DialogDescription className="text-center text-base">
+              <DialogDescription className="text-center text-base text-slate-500">
                 สแกน QR Code เพื่อชำระเงิน
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex flex-col items-center justify-center space-y-6">
               {/* กรอบ QR Code */}
-              <div className="bg-white p-4 rounded-xl border shadow-sm flex items-center justify-center">
+              <div className="bg-gradient-to-br from-white to-slate-50 p-5 rounded-2xl border-2 border-slate-100 shadow-smooth flex items-center justify-center">
                 {qrCodePayload && (
                   <QRCodeCanvas
                     value={qrCodePayload}
@@ -131,14 +131,17 @@ export default function PaymentDialog({
                 )}
               </div>
 
-              <div className="text-center space-y-1">
+              <div className="text-center space-y-2">
                 <p className="text-slate-500 text-sm">ยอดชำระทั้งหมด</p>
-                <p className="text-4xl font-bold text-blue-600">
+                <p className="text-4xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
                 </p>
-                <p className="text-xs text-slate-400 mt-2">
-                  PromptPay: {PROMPTPAY_ID}
-                </p>
+                <div className="flex items-center justify-center gap-2 mt-3">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                  <p className="text-xs text-slate-400">
+                    PromptPay: {PROMPTPAY_ID}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -146,9 +149,9 @@ export default function PaymentDialog({
           - flex-col: เรียงแนวตั้งเสมอ (ทั้งมือถือและคอม) เพื่อให้ปุ่มใหญ่ กดง่าย
           - gap-3: เว้นระยะห่างปุ่ม
         */}
-            <DialogFooter className="flex flex-col gap-3 sm:flex-col sm:space-x-0 w-full">
+            <DialogFooter className="flex flex-col gap-3 sm:flex-col sm:space-x-0 w-full pt-2">
               <Button
-                className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700 shadow-md active:scale-[0.98] transition-all"
+                className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-700 shadow-lg active:scale-[0.98] transition-all hover:shadow-xl"
                 onClick={onConfirm}
                 disabled={isProcessing}
               >
@@ -166,8 +169,8 @@ export default function PaymentDialog({
               </Button>
 
               <Button
-                variant="outline"
-                className="w-full h-12 text-base border-slate-300 hover:bg-slate-50 text-slate-600"
+                variant="ghost"
+                className="w-full h-12 text-base text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-all"
                 onClick={onClose}
                 disabled={isProcessing}
               >

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -42,6 +43,19 @@ import { toast } from "sonner";
 import { Product } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+
+// Helper to format category for display
+const formatCategory = (cat: string) => {
+  const map: Record<string, string> = {
+    'COFFEE': 'Coffee',
+    'NON_COFFEE': 'Non-Coffee', 
+    'BAKERY': 'Bakery',
+    'coffee': 'Coffee',
+    'non-coffee': 'Non-Coffee',
+    'bakery': 'Bakery',
+  };
+  return map[cat] || cat;
+};
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -185,22 +199,18 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-8 pt-6 space-y-4">
+    <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard">
-            <Button variant="ghost">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <h2 className="text-3xl font-bold">จัดการสินค้า</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
+          <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus className="mr-2" /> เพิ่มสินค้า
+        <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
+          <Plus className="w-4 h-4" /> เพิ่มสินค้า
         </Button>
       </div>
 
-      <div className="bg-white rounded-md border">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -232,7 +242,7 @@ export default function ProductsPage() {
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>
                   <span className="px-2 py-1 rounded bg-slate-100 text-xs">
-                    {p.category}
+                    {formatCategory(p.category)}
                   </span>
                 </TableCell>
                 <TableCell>฿{Number(p.price)}</TableCell>
@@ -280,7 +290,7 @@ export default function ProductsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
 
       {/* Dialog Form */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

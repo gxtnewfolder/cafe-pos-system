@@ -69,22 +69,21 @@ export default function OrderHistoryPage() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Loader2 className="animate-spin w-10 h-10 text-primary" />
+      <div className="flex h-[80vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin w-10 h-10 text-slate-600 mx-auto mb-2" />
+          <p className="text-slate-500">Loading orders...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 pt-6 space-y-6 bg-slate-50 min-h-screen">
+    <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard">
-            <Button variant="ghost">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <h2 className="text-3xl font-bold text-slate-800">ประวัติการขาย</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">ประวัติการขาย</h2>
+          <p className="text-slate-500 text-sm mt-1">ดูรายการขายทั้งหมด</p>
         </div>
       </div>
 
@@ -100,9 +99,9 @@ export default function OrderHistoryPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="shadow-smooth border-0 bg-white">
         <CardHeader>
-          <CardTitle>รายการออเดอร์ทั้งหมด ({filteredOrders.length})</CardTitle>
+          <CardTitle className="text-slate-800">รายการออเดอร์ทั้งหมด ({filteredOrders.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>

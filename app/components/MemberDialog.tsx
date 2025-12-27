@@ -87,31 +87,31 @@ export default function MemberDialog({ isOpen, onClose, onCustomerSelected }: Me
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-sm rounded-2xl">
+      <DialogContent className="max-w-sm rounded-2xl shadow-smooth-lg border-0">
         <DialogHeader>
-          <DialogTitle className="text-center">
+          <DialogTitle className="text-center text-xl font-bold text-slate-800">
             {isRegisterMode ? "สมัครสมาชิกใหม่" : "ระบุเบอร์โทรศัพท์"}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-2">
+        <div className="flex flex-col gap-5 py-2">
            {/* ช่องโชว์เบอร์ */}
-           <div className="text-center p-4 bg-slate-100 rounded-xl text-3xl font-bold tracking-widest text-slate-700 min-h-[72px] flex items-center justify-center">
-              {phone || <span className="text-slate-300">0XX-XXX...</span>}
+           <div className="text-center p-5 bg-gradient-to-br from-slate-100 to-slate-50 rounded-2xl text-3xl font-bold tracking-[0.2em] text-slate-700 min-h-[80px] flex items-center justify-center border border-slate-200/50 shadow-sm">
+              {phone || <span className="text-slate-300 tracking-wider">0XX-XXX-XXXX</span>}
            </div>
 
            {isRegisterMode ? (
-             <div className="space-y-3 animate-in fade-in zoom-in">
+             <div className="space-y-4 animate-in fade-in zoom-in">
                <Input 
                  placeholder="ชื่อเล่น / ชื่อลูกค้า" 
                  value={newName} 
                  onChange={(e) => setNewName(e.target.value)}
-                 className="text-lg text-center h-12"
+                 className="text-lg text-center h-14 border-2 border-slate-200 focus:border-slate-400 rounded-xl"
                />
-               <Button className="w-full h-12 text-lg" onClick={handleRegister} disabled={isLoading}>
+               <Button className="w-full h-14 text-lg bg-slate-800 hover:bg-slate-900 shadow-lg hover:shadow-xl transition-all active:scale-[0.98]" onClick={handleRegister} disabled={isLoading}>
                  <UserPlus className="mr-2" /> ยืนยันการสมัคร
                </Button>
-               <Button variant="ghost" className="w-full" onClick={() => setIsRegisterMode(false)}>
+               <Button variant="ghost" className="w-full text-slate-500 hover:text-slate-700" onClick={() => setIsRegisterMode(false)}>
                  กลับไปหน้าค้นหา
                </Button>
              </div>
@@ -120,18 +120,26 @@ export default function MemberDialog({ isOpen, onClose, onCustomerSelected }: Me
                {/* Numpad Grid */}
                <div className="grid grid-cols-3 gap-3">
                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                   <Button key={num} variant="outline" className="h-14 text-2xl font-semibold" onClick={() => addDigit(num.toString())}>
+                   <Button key={num} variant="outline" className="h-16 text-2xl font-semibold border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 active:scale-[0.95] transition-all rounded-xl" onClick={() => addDigit(num.toString())}>
                      {num}
                    </Button>
                  ))}
-                 <Button variant="outline" className="h-14 bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600" onClick={() => setPhone("")}>C</Button>
-                 <Button variant="outline" className="h-14 text-2xl font-semibold" onClick={() => addDigit("0")}>0</Button>
-                 <Button variant="outline" className="h-14 bg-slate-50" onClick={backspace}>
+                 <Button variant="outline" className="h-16 text-lg font-bold bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 border-2 border-red-200 rounded-xl active:scale-[0.95] transition-all" onClick={() => setPhone("")}>C</Button>
+                 <Button variant="outline" className="h-16 text-2xl font-semibold border-2 border-slate-200 hover:border-slate-400 hover:bg-slate-50 active:scale-[0.95] transition-all rounded-xl" onClick={() => addDigit("0")}>0</Button>
+                 <Button variant="outline" className="h-16 bg-slate-50 border-2 border-slate-200 rounded-xl active:scale-[0.95] transition-all" onClick={backspace}>
                    <X className="w-6 h-6" />
                  </Button>
                </div>
                
-               <Button className="w-full h-14 text-xl mt-2" onClick={handleSearch} disabled={isLoading || phone.length < 10}>
+               <Button 
+                 className={`w-full h-16 text-xl mt-2 shadow-lg transition-all active:scale-[0.98] rounded-xl ${
+                   phone.length === 10 
+                     ? 'bg-slate-800 hover:bg-slate-900 hover:shadow-xl' 
+                     : 'bg-slate-300 text-slate-500'
+                 }`} 
+                 onClick={handleSearch} 
+                 disabled={isLoading || phone.length < 10}
+               >
                   {isLoading ? "กำลังค้นหา..." : "ตกลง"}
                </Button>
              </>
