@@ -223,35 +223,23 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
     <div className="flex h-screen w-full bg-gradient-subtle overflow-hidden">
       {/* --- LEFT: Product Grid --- */}
       <div className="flex-1 flex flex-col h-full">
-        <header className="h-16 glass border-b border-slate-200/50 px-3 md:px-6 flex items-center justify-between shadow-smooth z-10 shrink-0">
-          <h1 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
-            <span className="text-xl md:text-2xl">☕</span>
+        <header className="h-12 lg:h-14 glass border-b border-slate-200/50 px-3 md:px-4 flex items-center justify-between shadow-smooth z-10 shrink-0">
+          <h1 className="text-base lg:text-lg font-bold text-slate-800 flex items-center gap-1.5">
+            <span className="text-lg lg:text-xl">☕</span>
             <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text hidden sm:inline">Pocket Café</span>
-            <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold text-xs">POS</Badge>
+            <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold text-[10px]">POS</Badge>
           </h1>
 
-          <div className="flex items-center gap-1">
-            <Link href="/dashboard">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
-              >
-                <LayoutDashboard className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">หลังบ้าน</span>
-              </Button>
-            </Link>
-            <Link href="/dashboard/products">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
-              >
-                <Package className="w-4 h-4 md:mr-2" />
-                <span className="hidden md:inline">สินค้า</span>
-              </Button>
-            </Link>
-          </div>
+          <Link href="/dashboard">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
+            >
+              <LayoutDashboard className="w-4 h-4 md:mr-2" />
+              <span className="hidden md:inline">หลังบ้าน</span>
+            </Button>
+          </Link>
 
           <div className="flex items-center gap-3">
             {selectedCustomer ? (
@@ -306,7 +294,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
         </header>
 
         {/* Filter Bar */}
-        <div className="px-3 md:px-6 py-3 md:py-4 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center gap-2 md:gap-4 shrink-0">
+        <div className="px-2 md:px-4 py-2 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center gap-2 shrink-0">
           {/* Category Tabs */}
           <div className="flex items-center gap-1 md:gap-2 flex-1 overflow-x-auto scrollbar-thin">
             {CATEGORIES.map((cat) => {
@@ -332,7 +320,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           </div>
 
           {/* Search Input */}
-          <div className="relative w-32 sm:w-40 md:w-52 lg:w-64 shrink-0">
+          <div className="relative w-28 sm:w-36 md:w-44 lg:w-52 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
               placeholder="ค้นหา..."
@@ -343,8 +331,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-3 md:p-6 scrollbar-thin">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-5 pb-20">
+        <ScrollArea className="flex-1 p-2 md:p-4 lg:p-5 scrollbar-thin">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3 lg:gap-4 pb-20">
             {filteredProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                 <Search className="w-12 h-12 mb-4 opacity-50" />
@@ -368,9 +356,9 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                       : "cursor-pointer bg-white shadow-smooth hover:shadow-smooth-lg active:scale-[0.98] border-transparent"
                   } ${inCart ? "border-slate-800 ring-2 ring-slate-800/10 shadow-smooth-lg" : ""}`}
                 >
-                  <CardContent className="p-4 flex flex-col gap-3">
-                    {/* Image Area */}
-                    <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl overflow-hidden relative group">
+                  <CardContent className="p-2 lg:p-3 flex flex-col gap-1.5 lg:gap-2">
+                    {/* Image Area - 4:3 ratio instead of square */}
+                    <div className="aspect-[4/3] bg-gradient-to-br from-slate-100 to-slate-50 rounded-lg overflow-hidden relative group">
                       {product.image_url ? (
                         <img
                           src={product.image_url}
@@ -378,9 +366,9 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2">
-                          <Package className="w-8 h-8" />
-                          <span className="text-xs font-medium">No Image</span>
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-1">
+                          <Package className="w-6 h-6" />
+                          <span className="text-[10px] font-medium">No Image</span>
                         </div>
                       )}
 
@@ -394,7 +382,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                           <Badge
                             variant="destructive"
-                            className="shadow-lg font-bold px-3 py-1 text-sm"
+                            className="shadow-lg font-bold px-2 py-0.5 text-xs"
                           >
                             Sold Out
                           </Badge>
@@ -403,8 +391,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
                       {/* Quantity Badge */}
                       {inCart && (
-                        <div className="absolute top-2 right-2 animate-in zoom-in duration-200 z-10">
-                          <Badge className="h-7 w-7 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white bg-slate-800 text-white">
+                        <div className="absolute top-1 right-1 animate-in zoom-in duration-200 z-10">
+                          <Badge className="h-5 w-5 lg:h-6 lg:w-6 rounded-full p-0 flex items-center justify-center text-xs font-bold shadow-lg ring-1 ring-white bg-slate-800 text-white">
                             {inCart.quantity}
                           </Badge>
                         </div>
@@ -412,16 +400,16 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                     </div>
 
                     {/* Text Info */}
-                    <div className="space-y-1">
+                    <div className="space-y-0.5">
                       <h3
-                        className={`font-semibold line-clamp-1 text-sm md:text-base ${
+                        className={`font-semibold line-clamp-1 text-xs lg:text-sm ${
                           isOutOfStock ? "text-slate-400" : "text-slate-700"
                         }`}
                       >
                         {product.name}
                       </h3>
                       <p
-                        className={`text-base font-bold ${
+                        className={`text-sm lg:text-base font-bold ${
                           isOutOfStock ? "text-slate-400" : "text-slate-800"
                         }`}
                       >
@@ -437,7 +425,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
       </div>
 
       {/* --- RIGHT: Cart Sidebar --- */}
-      <div className="w-[220px] md:w-[240px] lg:w-[260px] xl:w-[340px] 2xl:w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
+      <div className="w-[240px] md:w-[270px] lg:w-[300px] xl:w-[360px] 2xl:w-[400px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
         <div className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
           <h2 className="font-bold text-sm lg:text-lg text-slate-800 flex items-center gap-1.5 lg:gap-2.5">
             <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
@@ -525,9 +513,9 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             </div>
             <Separator className="my-2 lg:my-3" />
             <div className="flex justify-between items-center">
-              <span className="font-bold text-slate-700 text-sm lg:text-lg">Total</span>
+              <span className="font-bold text-slate-700 text-xs lg:text-sm">Total</span>
               <div className="text-right">
-                <span className="text-xl lg:text-3xl font-bold text-slate-800">
+                <span className="text-lg lg:text-2xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
                 </span>
               </div>
