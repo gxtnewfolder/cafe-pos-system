@@ -10,5 +10,5 @@ export default withAuth({
 export const config = {
   // ระบุ Path ที่ต้องการป้องกัน
   // หมายความว่า: หน้าแรก (/) และหน้า Dashboard ทั้งหมด ต้อง Login ก่อน
-  matcher: ["/", "/dashboard/:path*"],
+  matcher: ["/", "/dashboard/:path*", "/api/dashboard/:path*"],
 };

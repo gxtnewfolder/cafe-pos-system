@@ -71,8 +71,6 @@ export async function GET() {
     console.error("🔥 Dashboard API Error Detail:", error);
     return NextResponse.json({ 
         error: "Failed to fetch dashboard data",
-        message: error.message, // 👈 เพิ่มบรรทัดนี้
-        stack: error.stack      // 👈 เพิ่มบรรทัดนี้
     }, { status: 500 });
   }
 }
