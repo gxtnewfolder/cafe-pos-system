@@ -23,6 +23,7 @@ interface PaymentDialogProps {
   totalAmount: number;
   onConfirm: () => void;
   isProcessing: boolean;
+  onRefresh?: () => void;
   successData?: {
     orderId: string;
     items: any[];
@@ -36,6 +37,7 @@ export default function PaymentDialog({
   totalAmount,
   onConfirm,
   isProcessing,
+  onRefresh,
   successData,
 }: PaymentDialogProps) {
   const PROMPTPAY_ID = "0812345678"; // ใส่เบอร์จริงของคุณ
@@ -51,6 +53,13 @@ export default function PaymentDialog({
   }, [isOpen, totalAmount, isSuccess]);
 
   const handleClose = () => {
+    onClose();
+  };
+
+  const handleNextOrder = () => {
+    if (onRefresh) {
+      onRefresh();
+    }
     onClose();
   };
   return (
@@ -99,7 +108,7 @@ export default function PaymentDialog({
               </PDFDownloadLink>
 
               <Button
-                onClick={handleClose}
+                onClick={handleNextOrder}
                 className="w-full h-14 text-lg bg-slate-800 text-white hover:bg-slate-900 shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 ปิดหน้าต่าง (Next Order) →

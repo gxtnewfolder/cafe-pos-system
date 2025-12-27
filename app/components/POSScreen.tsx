@@ -57,7 +57,9 @@ type POSScreenProps = {
   products: ProductWithNumber[];
 };
 
-export default function POSScreen({ products }: POSScreenProps) {
+export default function POSScreen({ products: initialProducts }: POSScreenProps) {
+  const [products, setProducts] = useState<ProductWithNumber[]>(initialProducts);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -137,8 +139,24 @@ export default function POSScreen({ products }: POSScreenProps) {
     0
   );
 
-  const refreshProducts = () => {
-    window.location.reload();
+  const refreshProducts = async () => {
+    try {
+      const res = await fetch('/api/products');
+      if (res.ok) {
+        const data = await res.json();
+        const transformed = data
+          .filter((p: any) => p.is_active)
+          .map((p: any) => ({
+            ...p,
+            price: Number(p.price),
+            stock: Number(p.stock),
+          }))
+          .sort((a: any, b: any) => b.category.localeCompare(a.category)); // desc order
+        setProducts(transformed);
+      }
+    } catch (error) {
+      console.error('Failed to refresh products:', error);
+    }
   };
 
   const handlePayment = async () => {
@@ -170,7 +188,7 @@ export default function POSScreen({ products }: POSScreenProps) {
 
       setCart([]);
       setSelectedCustomer(null);
-      refreshProducts();
+      // refreshProducts();
 
       toast.success("บันทึกออเดอร์สำเร็จ!");
     } catch (error: any) {
@@ -419,20 +437,21 @@ export default function POSScreen({ products }: POSScreenProps) {
       </div>
 
       {/* --- RIGHT: Cart Sidebar --- */}
-      <div className="w-[240px] md:w-[260px] lg:w-[300px] xl:w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
-        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
-          <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
-              <ShoppingCart className="w-4 h-4 text-white" />
+      <div className="w-[220px] md:w-[240px] lg:w-[260px] xl:w-[340px] 2xl:w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
+        <div className="h-14 lg:h-16 flex items-center justify-between px-3 lg:px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
+          <h2 className="font-bold text-sm lg:text-lg text-slate-800 flex items-center gap-1.5 lg:gap-2.5">
+            <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
+              <ShoppingCart className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
             </div>
-            Current Order
+            <span className="hidden xl:inline">Current Order</span>
+            <span className="xl:hidden">Order</span>
           </h2>
-          <Badge variant="secondary" className="text-slate-700 bg-slate-100 font-semibold px-3">
-            {cart.reduce((a, b) => a + b.quantity, 0)} Items
+          <Badge variant="secondary" className="text-slate-700 bg-slate-100 font-semibold px-2 lg:px-3 text-xs">
+            {cart.reduce((a, b) => a + b.quantity, 0)}
           </Badge>
         </div>
 
-        <ScrollArea className="flex-1 p-5 scrollbar-thin">
+        <ScrollArea className="flex-1 p-2 lg:p-5 scrollbar-thin">
           {cart.length === 0 ? (
             <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
               <div className="p-6 rounded-full bg-slate-50">
@@ -442,51 +461,51 @@ export default function POSScreen({ products }: POSScreenProps) {
               <p className="text-xs text-slate-300">Tap products to add them here</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {cart.map((item, index) => (
                 <div
                   key={item.product.id}
-                  className="group flex justify-between items-center gap-3 p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 transition-all duration-200 animate-in slide-in-from-right-5 fade-in"
+                  className="group p-2 lg:p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 transition-all duration-200 animate-in slide-in-from-right-5 fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex-1 space-y-0.5 min-w-0">
-                    <div className="text-sm font-semibold text-slate-800 truncate">
-                      {item.product.name}
+                  <div className="flex justify-between items-start gap-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs lg:text-sm font-semibold text-slate-800 truncate">
+                        {item.product.name}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        ฿{item.product.price.toLocaleString()} × {item.quantity}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      ฿{item.product.price.toLocaleString()} × {item.quantity}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="font-bold text-slate-800 text-sm whitespace-nowrap">
+                    <div className="font-bold text-slate-800 text-xs lg:text-sm whitespace-nowrap">
                       ฿{(item.product.price * item.quantity).toLocaleString()}
                     </div>
-                    <div className="flex items-center gap-0.5 bg-white rounded-lg p-1 shadow-sm border border-slate-100">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        onClick={() => removeFromCart(item.product.id)}
-                      >
-                        {item.quantity === 1 ? (
-                          <Trash2 className="w-3.5 h-3.5" />
-                        ) : (
-                          <Minus className="w-3.5 h-3.5" />
-                        )}
-                      </Button>
-                      <span className="text-sm font-bold w-6 text-center text-slate-700">
-                        {item.quantity}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                        onClick={() => addToCart(item.product)}
-                        disabled={item.quantity >= item.product.stock}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </Button>
-                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-0.5 bg-white rounded-lg p-0.5 shadow-sm border border-slate-100 w-fit ml-auto">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      onClick={() => removeFromCart(item.product.id)}
+                    >
+                      {item.quantity === 1 ? (
+                        <Trash2 className="w-3 h-3" />
+                      ) : (
+                        <Minus className="w-3 h-3" />
+                      )}
+                    </Button>
+                    <span className="text-xs font-bold w-5 text-center text-slate-700">
+                      {item.quantity}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                      onClick={() => addToCart(item.product)}
+                      disabled={item.quantity >= item.product.stock}
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -494,28 +513,28 @@ export default function POSScreen({ products }: POSScreenProps) {
           )}
         </ScrollArea>
 
-        <div className="p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-4 shrink-0">
-          <div className="space-y-2 bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <div className="flex justify-between text-slate-500 text-sm">
+        <div className="p-2 lg:p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-3 lg:space-y-4 shrink-0">
+          <div className="space-y-1.5 lg:space-y-2 bg-white rounded-xl p-2 lg:p-4 shadow-sm border border-slate-100">
+            <div className="flex justify-between text-slate-500 text-xs lg:text-sm">
               <span>Subtotal</span>
               <span className="font-medium">฿{totalAmount.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-slate-400 text-sm">
+            <div className="flex justify-between text-slate-400 text-xs lg:text-sm">
               <span>Tax (7%)</span>
               <span>-</span>
             </div>
-            <Separator className="my-3" />
+            <Separator className="my-2 lg:my-3" />
             <div className="flex justify-between items-center">
-              <span className="font-bold text-slate-700 text-lg">Total</span>
+              <span className="font-bold text-slate-700 text-sm lg:text-lg">Total</span>
               <div className="text-right">
-                <span className="text-3xl font-bold text-slate-800">
+                <span className="text-xl lg:text-3xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
                 </span>
               </div>
             </div>
           </div>
           <Button
-            className={`w-full h-14 text-lg font-bold shadow-lg transition-all duration-300 ${
+            className={`w-full h-10 lg:h-14 text-sm lg:text-lg font-bold shadow-lg transition-all duration-300 ${
               cart.length === 0 
                 ? 'bg-slate-200 text-slate-400' 
                 : 'bg-slate-800 hover:bg-slate-900 text-white hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
@@ -524,7 +543,7 @@ export default function POSScreen({ products }: POSScreenProps) {
             disabled={cart.length === 0}
             onClick={() => setIsPaymentOpen(true)}
           >
-            {cart.length === 0 ? "Empty Cart" : "Charge Payment →"}
+            {cart.length === 0 ? "Empty" : "Charge →"}
           </Button>
         </div>
       </div>
@@ -536,6 +555,7 @@ export default function POSScreen({ products }: POSScreenProps) {
         onConfirm={handlePayment}
         isProcessing={isProcessing}
         successData={successOrder}
+        onRefresh={refreshProducts}
       />
 
       <MemberDialog
