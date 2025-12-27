@@ -205,11 +205,11 @@ export default function POSScreen({ products }: POSScreenProps) {
     <div className="flex h-screen w-full bg-gradient-subtle overflow-hidden">
       {/* --- LEFT: Product Grid --- */}
       <div className="flex-1 flex flex-col h-full">
-        <header className="h-16 glass border-b border-slate-200/50 px-6 flex items-center justify-between shadow-smooth z-10 shrink-0">
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <span className="text-2xl">☕</span>
-            <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text">Pocket Café</span>
-            <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold">POS</Badge>
+        <header className="h-16 glass border-b border-slate-200/50 px-3 md:px-6 flex items-center justify-between shadow-smooth z-10 shrink-0">
+          <h1 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
+            <span className="text-xl md:text-2xl">☕</span>
+            <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text hidden sm:inline">Pocket Café</span>
+            <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold text-xs">POS</Badge>
           </h1>
 
           <div className="flex items-center gap-1">
@@ -217,20 +217,20 @@ export default function POSScreen({ products }: POSScreenProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200"
+                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
               >
-                <LayoutDashboard className="w-4 h-4 mr-2" />
-                หลังบ้าน
+                <LayoutDashboard className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">หลังบ้าน</span>
               </Button>
             </Link>
             <Link href="/dashboard/products">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200"
+                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
               >
-                <Package className="w-4 h-4 mr-2" />
-                สินค้า
+                <Package className="w-4 h-4 md:mr-2" />
+                <span className="hidden md:inline">สินค้า</span>
               </Button>
             </Link>
           </div>
@@ -288,9 +288,9 @@ export default function POSScreen({ products }: POSScreenProps) {
         </header>
 
         {/* Filter Bar */}
-        <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center gap-4 shrink-0">
+        <div className="px-3 md:px-6 py-3 md:py-4 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center gap-2 md:gap-4 shrink-0">
           {/* Category Tabs */}
-          <div className="flex items-center gap-2 flex-1">
+          <div className="flex items-center gap-1 md:gap-2 flex-1 overflow-x-auto scrollbar-thin">
             {CATEGORIES.map((cat) => {
               const isActive = selectedCategory === cat.id;
               const Icon = cat.icon;
@@ -299,7 +299,7 @@ export default function POSScreen({ products }: POSScreenProps) {
                   key={cat.id}
                   variant={isActive ? "default" : "ghost"}
                   size="sm"
-                  className={`gap-2 transition-all duration-200 ${
+                  className={`gap-1 md:gap-2 transition-all duration-200 shrink-0 px-2 md:px-3 ${
                     isActive
                       ? "bg-slate-800 text-white shadow-md"
                       : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
@@ -307,17 +307,17 @@ export default function POSScreen({ products }: POSScreenProps) {
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   <Icon className="w-4 h-4" />
-                  {cat.label}
+                  <span className="hidden sm:inline">{cat.label}</span>
                 </Button>
               );
             })}
           </div>
 
           {/* Search Input */}
-          <div className="relative w-64">
+          <div className="relative w-32 sm:w-40 md:w-52 lg:w-64 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="ค้นหาสินค้า..."
+              placeholder="ค้นหา..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
@@ -325,8 +325,8 @@ export default function POSScreen({ products }: POSScreenProps) {
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-6 scrollbar-thin">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-20">
+        <ScrollArea className="flex-1 p-3 md:p-6 scrollbar-thin">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 lg:gap-5 pb-20">
             {filteredProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                 <Search className="w-12 h-12 mb-4 opacity-50" />
@@ -419,7 +419,7 @@ export default function POSScreen({ products }: POSScreenProps) {
       </div>
 
       {/* --- RIGHT: Cart Sidebar --- */}
-      <div className="w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
+      <div className="w-[240px] md:w-[260px] lg:w-[300px] xl:w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
         <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
           <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
