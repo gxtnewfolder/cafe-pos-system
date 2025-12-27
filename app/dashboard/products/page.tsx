@@ -9,9 +9,11 @@ import {
   Package,
   CheckCircle,
   XCircle,
+  Minus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -42,6 +44,19 @@ import { Product } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+// Helper to format category for display
+const formatCategory = (cat: string) => {
+  const map: Record<string, string> = {
+    'COFFEE': 'Coffee',
+    'NON_COFFEE': 'Non-Coffee', 
+    'BAKERY': 'Bakery',
+    'coffee': 'Coffee',
+    'non-coffee': 'Non-Coffee',
+    'bakery': 'Bakery',
+  };
+  return map[cat] || cat;
+};
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -59,6 +74,11 @@ export default function ProductsPage() {
     stock: 0,
     is_active: true,
   });
+
+  // Stock Dialog State
+  const [isStockOpen, setIsStockOpen] = useState(false);
+  const [stockProductId, setStockProductId] = useState<string | null>(null);
+  const [stockToAdd, setStockToAdd] = useState<number>(0);
 
   // 1. Fetch Products
   const fetchProducts = async () => {
@@ -110,6 +130,44 @@ export default function ProductsPage() {
     }
   };
 
+  // 4. Handle Quick Stock Update
+  const openStockDialog = (p: Product) => {
+    setStockProductId(p.id);
+    setStockToAdd(0);
+    setIsStockOpen(true);
+  };
+
+  const handleStockUpdate = async () => {
+    if (!stockProductId) return;
+    try {
+      // Fetch current product to get latest stock first (safer)
+      // But for Quick Add, we can just PATCH with new absolute value?
+      // Or we can just calculate client side. Let's calculate client side for simplicity
+      const product = products.find(p => p.id === stockProductId);
+      if (!product) return;
+
+      const newStock = product.stock + stockToAdd;
+      if (newStock < 0) {
+        toast.error("Stock cannot be negative");
+        return;
+      }
+
+      const res = await fetch(`/api/products/${stockProductId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stock: newStock }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      toast.success("Stock updated successfully");
+      setIsStockOpen(false);
+      fetchProducts();
+    } catch (e) {
+      toast.error("Failed to update stock");
+    }
+  };
+
   const openAdd = () => {
     setIsEditing(false);
     setFormData({
@@ -141,22 +199,18 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-8 pt-6 space-y-4">
+    <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard">
-            <Button variant="ghost">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <h2 className="text-3xl font-bold">จัดการสินค้า</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
+          <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus className="mr-2" /> เพิ่มสินค้า
+        <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
+          <Plus className="w-4 h-4" /> เพิ่มสินค้า
         </Button>
       </div>
 
-      <div className="bg-white rounded-md border">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -188,7 +242,7 @@ export default function ProductsPage() {
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell>
                   <span className="px-2 py-1 rounded bg-slate-100 text-xs">
-                    {p.category}
+                    {formatCategory(p.category)}
                   </span>
                 </TableCell>
                 <TableCell>฿{Number(p.price)}</TableCell>
@@ -217,6 +271,14 @@ export default function ProductsPage() {
                     <Pencil className="w-4 h-4" />
                   </Button>
                   <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => openStockDialog(p)}
+                    title="Add Stock"
+                  >
+                    <Package className="w-4 h-4" />
+                  </Button>
+                  <Button
                     variant="destructive"
                     size="icon"
                     onClick={() => handleDelete(p.id)}
@@ -228,7 +290,7 @@ export default function ProductsPage() {
             ))}
           </TableBody>
         </Table>
-      </div>
+      </Card>
 
       {/* Dialog Form */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -326,6 +388,48 @@ export default function ProductsPage() {
               บันทึกข้อมูล
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Quick Stock Dialog */}
+      <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
+        <DialogContent className="max-w-sm">
+           <DialogHeader>
+             <DialogTitle>เพิ่ม/ลด สต็อกสินค้า</DialogTitle>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
+             <div className="flex items-center justify-center gap-4">
+                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev - 1)}>
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <div className="text-center w-20">
+                   <div className="text-3xl font-bold">{stockToAdd > 0 ? `+${stockToAdd}` : stockToAdd}</div>
+                   <p className="text-xs text-slate-500">Inventory change</p>
+                </div>
+                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev + 1)}>
+                  <Plus className="w-4 h-4" />
+                </Button>
+             </div>
+             
+             <div className="grid grid-cols-3 gap-2">
+                {[5, 10, 20, 50].map(num => (
+                  <Button key={num} variant="outline" size="sm" onClick={() => setStockToAdd(num)}>
+                    +{num}
+                  </Button>
+                ))}
+                <Button variant="outline" size="sm" className="col-span-2" onClick={() => setStockToAdd(0)}>Reset</Button>
+             </div>
+
+             <div className="bg-slate-50 p-3 rounded-lg text-center text-sm">
+                Current Stock: <span className="font-bold">{products.find(p => p.id === stockProductId)?.stock || 0}</span>
+                <span className="mx-2">→</span>
+                New Stock: <span className="font-bold text-blue-600">{(products.find(p => p.id === stockProductId)?.stock || 0) + stockToAdd}</span>
+             </div>
+
+             <Button className="w-full" onClick={handleStockUpdate}>
+                Confirm Update
+             </Button>
+           </div>
         </DialogContent>
       </Dialog>
     </div>

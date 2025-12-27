@@ -14,6 +14,11 @@ import {
   Minus,
   Trash2,
   ShoppingCart,
+  Search,
+  Coffee,
+  Cake,
+  Wine,
+  Grid3X3,
 } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { toast } from "sonner";
@@ -27,6 +32,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+
+// Category options for filter
+const CATEGORIES = [
+  { id: "ALL", label: "ทั้งหมด", icon: Grid3X3 },
+  { id: "COFFEE", label: "Coffee", icon: Coffee },
+  { id: "NON_COFFEE", label: "Non-Coffee", icon: Wine },
+  { id: "BAKERY", label: "Bakery", icon: Cake },
+];
 
 type ProductWithNumber = Omit<Product, "price"> & {
   price: number;
@@ -57,6 +71,10 @@ export default function POSScreen({ products }: POSScreenProps) {
     date: Date;
   } | null>(null);
 
+  // Filter states
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -65,6 +83,14 @@ export default function POSScreen({ products }: POSScreenProps) {
       router.push("/login");
     }
   }, [status, router]);
+
+  // Filter products based on category and search
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = selectedCategory === "ALL" || 
+      product.category.toLowerCase() === selectedCategory.toLowerCase().replace('_', '-');
+    const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const addToCart = (product: ProductWithNumber) => {
     if (product.stock <= 0) return;
@@ -161,9 +187,14 @@ export default function POSScreen({ products }: POSScreenProps) {
 
   if (status === "loading") {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        <span className="ml-2 text-slate-500">กำลังโหลดระบบ...</span>
+      <div className="h-screen w-full flex flex-col items-center justify-center bg-gradient-subtle">
+        <div className="relative">
+          <div className="absolute inset-0 animate-ping opacity-30">
+            <div className="h-16 w-16 rounded-full bg-slate-300" />
+          </div>
+          <Loader2 className="w-16 h-16 animate-spin text-slate-600 relative z-10" />
+        </div>
+        <span className="mt-4 text-slate-500 font-medium">กำลังโหลดระบบ...</span>
       </div>
     );
   }
@@ -171,20 +202,22 @@ export default function POSScreen({ products }: POSScreenProps) {
   if (!session) return null;
 
   return (
-    <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
+    <div className="flex h-screen w-full bg-gradient-subtle overflow-hidden">
       {/* --- LEFT: Product Grid --- */}
       <div className="flex-1 flex flex-col h-full">
-        <header className="h-16 bg-white border-b px-6 flex items-center justify-between shadow-sm z-10 shrink-0">
+        <header className="h-16 glass border-b border-slate-200/50 px-6 flex items-center justify-between shadow-smooth z-10 shrink-0">
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            ☕ Pocket Café <Badge variant="secondary">POS</Badge>
+            <span className="text-2xl">☕</span>
+            <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text">Pocket Café</span>
+            <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold">POS</Badge>
           </h1>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Link href="/dashboard">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-500 hover:text-slate-900"
+                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200"
               >
                 <LayoutDashboard className="w-4 h-4 mr-2" />
                 หลังบ้าน
@@ -194,7 +227,7 @@ export default function POSScreen({ products }: POSScreenProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-slate-500 hover:text-slate-900"
+                className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200"
               >
                 <Package className="w-4 h-4 mr-2" />
                 สินค้า
@@ -204,19 +237,20 @@ export default function POSScreen({ products }: POSScreenProps) {
 
           <div className="flex items-center gap-3">
             {selectedCustomer ? (
-              <div className="flex items-center gap-3 bg-blue-50 px-3 py-1.5 rounded-full border border-blue-100 animate-in slide-in-from-right">
+              <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-full border border-blue-100/80 animate-in slide-in-from-right shadow-sm">
                 <div className="flex flex-col items-end leading-none">
                   <span className="text-sm font-bold text-blue-700">
                     {selectedCustomer.name}
                   </span>
-                  <span className="text-xs text-blue-500">
+                  <span className="text-xs text-blue-500 flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse-soft"></span>
                     แต้มสะสม: {selectedCustomer.points}
                   </span>
                 </div>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="h-8 w-8 rounded-full text-blue-400 hover:text-red-500 hover:bg-red-50"
+                  className="h-8 w-8 rounded-full text-blue-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
                   onClick={() => setSelectedCustomer(null)}
                 >
                   <LogOut className="w-4 h-4" />
@@ -225,7 +259,7 @@ export default function POSScreen({ products }: POSScreenProps) {
             ) : (
               <Button
                 variant="outline"
-                className="gap-2"
+                className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
                 onClick={() => setIsMemberOpen(true)}
               >
                 <User className="w-4 h-4" /> สมาชิก
@@ -233,60 +267,116 @@ export default function POSScreen({ products }: POSScreenProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-2 border-l pl-4 ml-2">
-            <span className="text-sm text-slate-500">
-              {session?.user?.name} ({session?.user?.email})
-            </span>
+          <div className="flex items-center gap-3 border-l border-slate-200/50 pl-4 ml-2">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold">
+                {session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </div>
+              <span className="text-sm text-slate-600 font-medium hidden lg:inline">
+                {session?.user?.name}
+              </span>
+            </div>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              className="text-slate-400 hover:text-red-500 hover:bg-red-50/50 transition-all duration-200"
               onClick={() => signOut()}
             >
-              Logout
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </header>
 
-        <ScrollArea className="flex-1 p-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
-            {products.map((product) => {
-              const inCart = cart.find((c) => c.product.id === product.id);
-              const isOutOfStock = product.stock <= 0;
-
+        {/* Filter Bar */}
+        <div className="px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-slate-100 flex items-center gap-4 shrink-0">
+          {/* Category Tabs */}
+          <div className="flex items-center gap-2 flex-1">
+            {CATEGORIES.map((cat) => {
+              const isActive = selectedCategory === cat.id;
+              const Icon = cat.icon;
               return (
+                <Button
+                  key={cat.id}
+                  variant={isActive ? "default" : "ghost"}
+                  size="sm"
+                  className={`gap-2 transition-all duration-200 ${
+                    isActive
+                      ? "bg-slate-800 text-white shadow-md"
+                      : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                  }`}
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  <Icon className="w-4 h-4" />
+                  {cat.label}
+                </Button>
+              );
+            })}
+          </div>
+
+          {/* Search Input */}
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="ค้นหาสินค้า..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+            />
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1 p-6 scrollbar-thin">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 pb-20">
+            {filteredProducts.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
+                <Search className="w-12 h-12 mb-4 opacity-50" />
+                <p className="text-lg font-medium">ไม่พบสินค้า</p>
+                <p className="text-sm">ลองเปลี่ยนหมวดหรือคำค้นหา</p>
+              </div>
+            ) : (
+              filteredProducts.map((product) => {
+                const inCart = cart.find((c) => c.product.id === product.id);
+                const isOutOfStock = product.stock <= 0;
+
+                return (
                 <Card
                   key={product.id}
                   onClick={() => {
                     if (!isOutOfStock) addToCart(product);
                   }}
-                  className={`transition-all border-2 ${
+                  className={`transition-all duration-300 border-2 overflow-hidden hover-lift ${
                     isOutOfStock
-                      ? "opacity-60 grayscale cursor-not-allowed border-slate-100 bg-slate-50"
-                      : "cursor-pointer hover:shadow-lg active:scale-95 border-transparent hover:border-slate-200"
-                  } ${inCart ? "border-primary ring-1 ring-primary/20" : ""}`}
+                      ? "opacity-50 grayscale cursor-not-allowed border-slate-100 bg-slate-50/50"
+                      : "cursor-pointer bg-white shadow-smooth hover:shadow-smooth-lg active:scale-[0.98] border-transparent"
+                  } ${inCart ? "border-slate-800 ring-2 ring-slate-800/10 shadow-smooth-lg" : ""}`}
                 >
                   <CardContent className="p-4 flex flex-col gap-3">
                     {/* Image Area */}
-                    <div className="aspect-square bg-slate-100 rounded-lg overflow-hidden relative group">
+                    <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-50 rounded-xl overflow-hidden relative group">
                       {product.image_url ? (
                         <img
                           src={product.image_url}
                           alt={product.name}
-                          className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-                          No Image
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-2">
+                          <Package className="w-8 h-8" />
+                          <span className="text-xs font-medium">No Image</span>
                         </div>
+                      )}
+
+                      {/* Overlay gradient on hover */}
+                      {!isOutOfStock && (
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       )}
 
                       {/* ✅ Stock Badge - โชว์เฉพาะตอน Sold Out */}
                       {isOutOfStock && (
-                        <div className="absolute top-2 left-2 z-10">
+                        <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
                           <Badge
                             variant="destructive"
-                            className="shadow-md font-bold"
+                            className="shadow-lg font-bold px-3 py-1 text-sm"
                           >
                             Sold Out
                           </Badge>
@@ -296,7 +386,7 @@ export default function POSScreen({ products }: POSScreenProps) {
                       {/* Quantity Badge */}
                       {inCart && (
                         <div className="absolute top-2 right-2 animate-in zoom-in duration-200 z-10">
-                          <Badge className="h-6 w-6 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-md ring-2 ring-white">
+                          <Badge className="h-7 w-7 rounded-full p-0 flex items-center justify-center text-sm font-bold shadow-lg ring-2 ring-white bg-slate-800 text-white">
                             {inCart.quantity}
                           </Badge>
                         </div>
@@ -304,17 +394,17 @@ export default function POSScreen({ products }: POSScreenProps) {
                     </div>
 
                     {/* Text Info */}
-                    <div>
+                    <div className="space-y-1">
                       <h3
                         className={`font-semibold line-clamp-1 text-sm md:text-base ${
-                          isOutOfStock ? "text-slate-400" : "text-slate-800"
+                          isOutOfStock ? "text-slate-400" : "text-slate-700"
                         }`}
                       >
                         {product.name}
                       </h3>
                       <p
-                        className={`text-sm font-medium ${
-                          isOutOfStock ? "text-slate-400" : "text-slate-500"
+                        className={`text-base font-bold ${
+                          isOutOfStock ? "text-slate-400" : "text-slate-800"
                         }`}
                       >
                         ฿{product.price.toLocaleString()}
@@ -322,72 +412,79 @@ export default function POSScreen({ products }: POSScreenProps) {
                     </div>
                   </CardContent>
                 </Card>
-              );
-            })}
+                );
+              }))}
           </div>
         </ScrollArea>
       </div>
 
       {/* --- RIGHT: Cart Sidebar --- */}
-      <div className="w-[380px] bg-white border-l shadow-2xl flex flex-col h-full shrink-0 z-20">
-        <div className="h-16 flex items-center justify-between px-6 border-b bg-slate-50 shrink-0">
-          <h2 className="font-semibold text-lg text-slate-800 flex items-center gap-2">
-            <ShoppingCart className="w-5 h-5" /> Current Order
+      <div className="w-[380px] bg-white border-l border-slate-200/50 shadow-smooth-lg flex flex-col h-full shrink-0 z-20">
+        <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white shrink-0">
+          <h2 className="font-bold text-lg text-slate-800 flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+              <ShoppingCart className="w-4 h-4 text-white" />
+            </div>
+            Current Order
           </h2>
-          <Badge variant="outline" className="text-slate-600">
+          <Badge variant="secondary" className="text-slate-700 bg-slate-100 font-semibold px-3">
             {cart.reduce((a, b) => a + b.quantity, 0)} Items
           </Badge>
         </div>
 
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className="flex-1 p-5 scrollbar-thin">
           {cart.length === 0 ? (
             <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
-              <ShoppingBasketIcon />
-              <p className="text-sm font-medium">No items in cart</p>
+              <div className="p-6 rounded-full bg-slate-50">
+                <ShoppingBasketIcon />
+              </div>
+              <p className="text-sm font-medium text-slate-400">No items in cart</p>
+              <p className="text-xs text-slate-300">Tap products to add them here</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {cart.map((item) => (
+            <div className="space-y-3">
+              {cart.map((item, index) => (
                 <div
                   key={item.product.id}
-                  className="group flex justify-between items-start gap-3 animate-in slide-in-from-right-5 fade-in duration-300"
+                  className="group flex justify-between items-center gap-3 p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 transition-all duration-200 animate-in slide-in-from-right-5 fade-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex-1 space-y-1">
-                    <div className="text-sm font-semibold text-slate-800">
+                  <div className="flex-1 space-y-0.5 min-w-0">
+                    <div className="text-sm font-semibold text-slate-800 truncate">
                       {item.product.name}
                     </div>
                     <div className="text-xs text-slate-500">
-                      ฿{item.product.price} x {item.quantity}
+                      ฿{item.product.price.toLocaleString()} × {item.quantity}
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="font-bold text-slate-800 text-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="font-bold text-slate-800 text-sm whitespace-nowrap">
                       ฿{(item.product.price * item.quantity).toLocaleString()}
                     </div>
-                    <div className="flex items-center gap-1 bg-slate-100 rounded-md p-0.5">
+                    <div className="flex items-center gap-0.5 bg-white rounded-lg p-1 shadow-sm border border-slate-100">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 rounded-sm text-red-500 hover:text-red-600 hover:bg-white"
+                        className="h-7 w-7 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                         onClick={() => removeFromCart(item.product.id)}
                       >
                         {item.quantity === 1 ? (
-                          <Trash2 className="w-3 h-3" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         ) : (
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3.5 h-3.5" />
                         )}
                       </Button>
-                      <span className="text-xs font-medium w-4 text-center">
+                      <span className="text-sm font-bold w-6 text-center text-slate-700">
                         {item.quantity}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 rounded-sm text-blue-600 hover:text-blue-700 hover:bg-white"
+                        className="h-7 w-7 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
                         onClick={() => addToCart(item.product)}
                         disabled={item.quantity >= item.product.stock}
                       >
-                        <Plus className="w-3 h-3" />
+                        <Plus className="w-3.5 h-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -397,31 +494,37 @@ export default function POSScreen({ products }: POSScreenProps) {
           )}
         </ScrollArea>
 
-        <div className="p-6 bg-slate-50 border-t space-y-4 shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-          <div className="space-y-2">
+        <div className="p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-4 shrink-0">
+          <div className="space-y-2 bg-white rounded-xl p-4 shadow-sm border border-slate-100">
             <div className="flex justify-between text-slate-500 text-sm">
               <span>Subtotal</span>
-              <span>{totalAmount.toLocaleString()}</span>
+              <span className="font-medium">฿{totalAmount.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-slate-500 text-sm">
+            <div className="flex justify-between text-slate-400 text-sm">
               <span>Tax (7%)</span>
               <span>-</span>
             </div>
-            <Separator className="my-2" />
-            <div className="flex justify-between items-end">
-              <span className="font-semibold text-slate-700">Total</span>
-              <span className="text-2xl font-bold text-primary">
-                ฿{totalAmount.toLocaleString()}
-              </span>
+            <Separator className="my-3" />
+            <div className="flex justify-between items-center">
+              <span className="font-bold text-slate-700 text-lg">Total</span>
+              <div className="text-right">
+                <span className="text-3xl font-bold text-slate-800">
+                  ฿{totalAmount.toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
           <Button
-            className="w-full h-12 text-lg font-bold shadow-lg"
+            className={`w-full h-14 text-lg font-bold shadow-lg transition-all duration-300 ${
+              cart.length === 0 
+                ? 'bg-slate-200 text-slate-400' 
+                : 'bg-slate-800 hover:bg-slate-900 text-white hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]'
+            }`}
             size="lg"
             disabled={cart.length === 0}
             onClick={() => setIsPaymentOpen(true)}
           >
-            {cart.length === 0 ? "Empty Cart" : "Charge Payment"}
+            {cart.length === 0 ? "Empty Cart" : "Charge Payment →"}
           </Button>
         </div>
       </div>

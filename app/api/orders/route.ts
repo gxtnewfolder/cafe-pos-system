@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   try {
@@ -83,6 +84,11 @@ export async function POST(req: Request) {
 
       return newOrder;
     });
+    
+    // Revalidate products page (stock updated) and dashboard
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+    revalidatePath("/dashboard/products");
 
     return NextResponse.json({ success: true, orderId: result.id });
 
@@ -94,5 +100,21 @@ export async function POST(req: Request) {
       { error: error.message || "Failed to create order" },
       { status: 400 } // ใช้ 400 Bad Request แทน 500 เพื่อให้ Frontend รู้ว่าเป็น Error จาก Business Logic
     );
+  }
+}
+
+export async function GET() {
+  try {
+    const orders = await prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        customer: true, // เพื่อโชว์ชื่อลูกค้า
+        items: true     // เพื่อโชว์จำนวนสินค้า
+      }
+    });
+
+    return NextResponse.json(orders);
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
   }
 }
