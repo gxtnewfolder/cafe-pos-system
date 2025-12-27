@@ -1,4 +1,5 @@
 import prisma from '../lib/db'
+import bcrypt from 'bcryptjs';
 
 async function main() {
   console.log('🌱 Start seeding...')
@@ -92,7 +93,21 @@ async function main() {
     })
   }
   console.log(`👥 Created ${customers.length} customers`)
+  // 2. ✅ เพิ่มส่วนสร้าง User (Admin)
+  const passwordHash = await bcrypt.hash('123456', 10); // รหัสผ่านคือ 123456
+  
+  const admin = await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      password: passwordHash,
+      name: 'Manager',
+      role: 'ADMIN',
+    },
+  });
 
+  console.log({ admin });
   console.log('✅ Seeding finished.')
 }
 

@@ -10,6 +10,7 @@ import { Plus, Minus, Trash2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
+import { signOut, useSession } from "next-auth/react";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ export default function POSScreen({ products }: POSScreenProps) {
     items: any[];
     date: Date;
   } | null>(null);
+  const { data: session } = useSession();
 
   const addToCart = (product: ProductWithNumber) => {
     setCart((prev) => {
@@ -189,6 +191,20 @@ export default function POSScreen({ products }: POSScreenProps) {
                 <User className="w-4 h-4" /> สมาชิก
               </Button>
             )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-500 mr-2">
+              {session?.user?.name} ({session?.user?.email}){" "}
+              {/* โชว์ชื่อกับ Role (ที่เรา Hack ไว้ใน email) */}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={() => signOut()}
+            >
+              Logout
+            </Button>
           </div>
         </header>
 
