@@ -75,7 +75,7 @@ export default function ProductsPage() {
   // 2. Handle Submit (Create/Update)
   const handleSubmit = async () => {
     try {
-      const method = isEditing ? "PATCH" : "POST";
+      const method = isEditing ? "PUT" : "POST";
       const url = isEditing ? `/api/products/${formData.id}` : "/api/products";
 
       const res = await fetch(url, {
