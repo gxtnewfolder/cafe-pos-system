@@ -19,6 +19,7 @@ import {
   Cake,
   Wine,
   Grid3X3,
+  ShoppingBasket,
 } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { toast } from "sonner";
@@ -441,12 +442,14 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
         <ScrollArea className="flex-1 p-2 lg:p-5 scrollbar-thin">
           {cart.length === 0 ? (
-            <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
-              <div className="p-6 rounded-full bg-slate-50">
-                <ShoppingBasketIcon />
+            <div className="h-[40vh] flex flex-col items-center justify-center text-slate-300 gap-3">
+              <div className="p-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-50 shadow-inner">
+                <ShoppingBasket className="w-10 h-10 text-slate-300" strokeWidth={1.5} />
               </div>
-              <p className="text-sm font-medium text-slate-400">No items in cart</p>
-              <p className="text-xs text-slate-300">Tap products to add them here</p>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-400">No items in cart</p>
+                <p className="text-xs text-slate-300 mt-1">Tap products to add</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -552,30 +555,5 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
         onCustomerSelected={setSelectedCustomer}
       />
     </div>
-  );
-}
-
-function ShoppingBasketIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="64"
-      height="64"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m5 11 4-7" />
-      <path d="m19 11-4-7" />
-      <path d="M2 11h20" />
-      <path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8c.9 0 1.8-.7 2-1.6l1.7-7.4" />
-      <path d="m9 11 1 9" />
-      <path d="m4.5 11 .1 9" />
-      <path d="m12 11 2 9" />
-      <path d="m20 11-1 9" />
-    </svg>
   );
 }
