@@ -72,18 +72,18 @@ export async function POST(req: Request) {
   }
 }
 
-// PUT /api/customers - อัพเดทข้อมูลลูกค้า
+// 3. อัพเดทข้อมูลสมาชิก
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, name, phone, points } = body;
+    const { id, phone, name, points } = body;
 
     if (!id) {
-      return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
+      return NextResponse.json({ error: "Customer ID required" }, { status: 400 });
     }
 
     // ถ้ามีการเปลี่ยนเบอร์โทร ต้องเช็คว่าเบอร์ใหม่ซ้ำกับคนอื่นหรือไม่
-    if (phone !== undefined) {
+    if (phone) {
       const existingWithPhone = await prisma.customer.findFirst({
         where: {
           phone,
@@ -99,39 +99,37 @@ export async function PUT(req: Request) {
       }
     }
 
-    const customer = await prisma.customer.update({
+    const updatedCustomer = await prisma.customer.update({
       where: { id },
       data: {
-        ...(name !== undefined && { name }),
-        ...(phone !== undefined && { phone }),
+        ...(phone && { phone }),
+        ...(name && { name }),
         ...(points !== undefined && { points }),
-      }
+      },
     });
 
-    return NextResponse.json(customer);
+    return NextResponse.json(updatedCustomer);
   } catch (error) {
-    console.error("Failed to update customer:", error);
     return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });
   }
 }
 
-// DELETE /api/customers - ลบลูกค้า
+// 4. ลบสมาชิก
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
+    return NextResponse.json({ error: "Customer ID required" }, { status: 400 });
   }
 
   try {
     await prisma.customer.delete({
-      where: { id }
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Failed to delete customer:", error);
     return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 });
   }
 }

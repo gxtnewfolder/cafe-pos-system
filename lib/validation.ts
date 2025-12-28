@@ -193,3 +193,83 @@ export function validateProductPatch(body: any): ValidationResult<ProductUpdateD
 
   return { success: true, data };
 }
+
+// ============ Settings Validation ============
+
+export type SettingsUpdateData = {
+  store_name?: string;
+  store_logo?: string;
+  address?: string;
+  phone?: string;
+  tax_id?: string;
+};
+
+/**
+ * Validate settings data for update
+ */
+export function validateSettingsUpdate(body: any): ValidationResult<SettingsUpdateData> {
+  const data: SettingsUpdateData = {};
+
+  // Store name (if provided)
+  if (body.store_name !== undefined && body.store_name !== null) {
+    if (typeof body.store_name !== 'string') {
+      return { success: false, error: 'Store name must be a string' };
+    }
+    if (body.store_name.trim().length > 100) {
+      return { success: false, error: 'Store name must be 100 characters or less' };
+    }
+    data.store_name = body.store_name.trim();
+  }
+
+  // Store logo (if provided)
+  if (body.store_logo !== undefined) {
+    if (body.store_logo !== null && typeof body.store_logo !== 'string') {
+      return { success: false, error: 'Store logo must be a string or null' };
+    }
+    data.store_logo = body.store_logo;
+  }
+
+  // Address (if provided)
+  if (body.address !== undefined) {
+    if (body.address !== null && typeof body.address !== 'string') {
+      return { success: false, error: 'Address must be a string or null' };
+    }
+    if (body.address && body.address.length > 500) {
+      return { success: false, error: 'Address must be 500 characters or less' };
+    }
+    data.address = body.address;
+  }
+
+  // Phone (if provided)
+  if (body.phone !== undefined) {
+    if (body.phone !== null && typeof body.phone !== 'string') {
+      return { success: false, error: 'Phone must be a string or null' };
+    }
+    if (body.phone) {
+      // Validate Thai phone format (10 digits starting with 0)
+      const phoneRegex = /^0[0-9]{9}$/;
+      if (!phoneRegex.test(body.phone.replace(/-/g, ''))) {
+        return { success: false, error: 'Phone must be a valid 10-digit Thai phone number' };
+      }
+    }
+    data.phone = body.phone?.replace(/-/g, '') || null;
+  }
+
+  // Tax ID (if provided)
+  if (body.tax_id !== undefined) {
+    if (body.tax_id !== null && typeof body.tax_id !== 'string') {
+      return { success: false, error: 'Tax ID must be a string or null' };
+    }
+    if (body.tax_id) {
+      // Validate Thai Tax ID format (13 digits)
+      const taxIdRegex = /^[0-9]{13}$/;
+      if (!taxIdRegex.test(body.tax_id.replace(/-/g, ''))) {
+        return { success: false, error: 'Tax ID must be a valid 13-digit number' };
+      }
+    }
+    data.tax_id = body.tax_id?.replace(/-/g, '') || null;
+  }
+
+  return { success: true, data };
+}
+
