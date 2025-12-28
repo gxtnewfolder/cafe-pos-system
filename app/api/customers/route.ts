@@ -109,7 +109,12 @@ export async function PUT(req: Request) {
     });
 
     return NextResponse.json(updatedCustomer);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Failed to update customer:", error);
+    // P2025: Record to update not found.
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
     return NextResponse.json({ error: "Failed to update customer" }, { status: 500 });
   }
 }
@@ -129,7 +134,12 @@ export async function DELETE(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Failed to delete customer:", error);
+    // P2025: Record to delete not found.
+    if (error?.code === 'P2025') {
+      return NextResponse.json({ error: "Customer not found" }, { status: 404 });
+    }
     return NextResponse.json({ error: "Failed to delete customer" }, { status: 500 });
   }
 }

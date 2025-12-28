@@ -215,6 +215,9 @@ export function validateSettingsUpdate(body: any): ValidationResult<SettingsUpda
     if (typeof body.store_name !== 'string') {
       return { success: false, error: 'Store name must be a string' };
     }
+    if (body.store_name.trim() === '') {
+      return { success: false, error: 'Store name cannot be empty' };
+    }
     if (body.store_name.trim().length > 100) {
       return { success: false, error: 'Store name must be 100 characters or less' };
     }
