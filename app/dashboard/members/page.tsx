@@ -58,10 +58,42 @@ interface Customer {
     orders: number;
   };
 }
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 export default function MembersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6);
+
+  useEffect(() => {
+    const calculateItems = () => {
+      const vh = window.innerHeight;
+      const availableHeight = vh - 260; 
+      const rowHeight = 60; 
+      const items = Math.floor(availableHeight / rowHeight);
+      setItemsPerPage(Math.max(5, items));
+    }
+    calculateItems();
+    window.addEventListener('resize', calculateItems);
+    return () => window.removeEventListener('resize', calculateItems);
+  }, []);
+
+  const totalPages = Math.ceil(customers.length / itemsPerPage);
+  const paginatedCustomers = customers.slice(
+     (currentPage - 1) * itemsPerPage,
+     currentPage * itemsPerPage
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   // Dialog states
@@ -205,16 +237,64 @@ export default function MembersPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+       <div className="h-24 w-full bg-slate-100 rounded-2xl animate-pulse" />
+       
+       <div className="max-w-md">
+         <div className="h-11 w-full bg-slate-100 rounded-xl animate-pulse" />
+       </div>
+
+       <Card className="shadow-smooth border-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-50">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <TableHead key={i}>
+                    <div className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                       <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
+                       <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                    </div>
+                  </TableCell>
+                  <TableCell><div className="h-4 w-24 bg-slate-100 rounded animate-pulse" /></TableCell>
+                  <TableCell>
+                    <div className="flex justify-center">
+                       <div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-center">
+                       <div className="h-4 w-8 bg-slate-100 rounded animate-pulse" />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right"><div className="h-4 w-20 bg-slate-100 rounded animate-pulse ml-auto" /></TableCell>
+                  <TableCell>
+                     <div className="flex justify-center gap-2">
+                        <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+                        <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+                     </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+    <div className="h-screen max-h-screen p-4 md:p-6 lg:p-8 flex flex-col gap-4">
       {/* Header with Gradient */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-sky-100/50 to-blue-50/50 p-6 rounded-2xl border border-sky-100 shadow-sm relative overflow-hidden">
         {/* Decorative background element */}
@@ -253,8 +333,8 @@ export default function MembersPage() {
       </div>
 
       {/* Table */}
-      <Card className="shadow-smooth border-0 overflow-hidden">
-        <div className="overflow-x-auto">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl gap-0 flex flex-col min-h-0 flex-1 pt-4 pb-2">
+        <div className="flex-1 overflow-auto p-0 px-1">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
@@ -274,7 +354,7 @@ export default function MembersPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                customers.map((customer) => (
+                paginatedCustomers.map((customer) => (
                   <TableRow key={customer.id} className="hover:bg-slate-50">
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -336,6 +416,52 @@ export default function MembersPage() {
             </TableBody>
           </Table>
         </div>
+
+      {/* Pagination Controls */}
+      {customers.length > 0 && (
+         <div className="py-4 border-t border-slate-100 flex justify-center bg-white shrink-0 mt-auto">
+             <Pagination>
+                <PaginationContent>
+                   <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                   
+                   {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                      let pNum = i + 1;
+                      if (totalPages > 5 && currentPage > 3) {
+                         pNum = currentPage - 2 + i;
+                         if (pNum > totalPages) pNum = totalPages - (4 - i);
+                      }
+                      if (pNum <= 0) return null;
+
+                      return (
+                        <PaginationItem key={pNum}>
+                           <PaginationLink 
+                              isActive={currentPage === pNum} 
+                              onClick={() => setCurrentPage(pNum)}
+                              href="#"
+                           >
+                              {pNum}
+                           </PaginationLink>
+                        </PaginationItem>
+                      )
+                   })}
+
+                   <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                </PaginationContent>
+             </Pagination>
+         </div>
+      )}
       </Card>
 
       {/* Add/Edit Dialog */}

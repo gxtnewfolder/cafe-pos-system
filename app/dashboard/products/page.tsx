@@ -43,6 +43,15 @@ import { toast } from "sonner";
 import { Product } from "@/app/generated/prisma/client";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 // Helper to format category for display
 const formatCategory = (cat: string) => {
@@ -60,6 +69,29 @@ const formatCategory = (cat: string) => {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
+
+  useEffect(() => {
+    const calculateItems = () => {
+      const vh = window.innerHeight;
+      const availableHeight = vh - 80; 
+      const rowHeight = 75; // Approx row height with taller images
+      const items = Math.floor(availableHeight / rowHeight);
+      setItemsPerPage(Math.max(4, items));
+    }
+    calculateItems();
+    window.addEventListener('resize', calculateItems);
+    return () => window.removeEventListener('resize', calculateItems);
+  }, []);
+
+  const totalPages = Math.ceil(products.length / itemsPerPage);
+  const paginatedProducts = products.slice(
+     (currentPage - 1) * itemsPerPage,
+     currentPage * itemsPerPage
+  );
 
   // Form State
   const [isOpen, setIsOpen] = useState(false);
@@ -199,8 +231,8 @@ export default function ProductsPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 space-y-4 md:space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4 shrink-0">
         <div>
           <h2 className="text-xl md:text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
           <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
@@ -210,8 +242,8 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl">
-        <div className="overflow-x-auto">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl gap-0 flex flex-col min-h-0 flex-1 pt-4 pb-2">
+        <div className="flex-1 overflow-auto p-0 px-1">
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-100">
             <TableRow className="hover:bg-slate-50/50">
@@ -226,87 +258,179 @@ export default function ProductsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((p) => (
-              <TableRow
-                key={p.id}
-                className={`group transition-colors ${!p.is_active ? "opacity-60 bg-slate-50/50" : "hover:bg-slate-50/50"}`}
-              >
-                <TableCell>
-                  <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden border border-slate-200/50">
-                    {p.image_url ? (
-                      <img
-                        src={p.image_url}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <Package className="w-5 h-5" />
-                      </div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="font-mono text-xs text-slate-500">{p.code || "-"}</TableCell>
-                <TableCell className="font-medium text-slate-700">{p.name}</TableCell>
-                <TableCell>
-                  <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-600 border border-slate-200">
-                    {formatCategory(p.category)}
-                  </span>
-                </TableCell>
-                <TableCell className="font-medium">฿{Number(p.price).toLocaleString()}</TableCell>
-                <TableCell>
-                  <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold ${
-                      p.stock <= 5 
-                        ? "bg-red-50 text-red-600 border border-red-100" 
-                        : "bg-slate-100 text-slate-700 border border-slate-200"
-                    }`}>
-                    {p.stock}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {p.is_active ? (
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full w-fit border border-emerald-100">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                      Active
+            {isLoading ? (
+              // Skeleton Loading State
+              Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-12 bg-slate-100 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-6 w-20 bg-slate-100 rounded-full animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-4 w-16 bg-slate-100 rounded animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-5 w-10 bg-slate-100 rounded-full animate-pulse" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse" />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                       <div className="h-8 w-8 bg-slate-100 rounded animate-pulse" />
+                       <div className="h-8 w-8 bg-slate-100 rounded animate-pulse" />
+                       <div className="h-8 w-8 bg-slate-100 rounded animate-pulse" />
                     </div>
-                  ) : (
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full w-fit border border-slate-200">
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
-                      Inactive
-                    </div>
-                  )}
-                </TableCell>
-                <TableCell className="text-right space-x-1 pr-4">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                    onClick={() => openEdit(p)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    onClick={() => openStockDialog(p)}
-                    title="Add Stock"
-                  >
-                    <Package className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(p.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : products.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-60 text-center">
+                  <div className="flex flex-col items-center justify-center text-slate-400">
+                    <Package className="w-12 h-12 mb-2 opacity-50" />
+                    <p className="text-lg font-medium">ไม่มีสินค้าในระบบ</p>
+                    <p className="text-sm">เริ่มต้นด้วยการเพิ่มสินค้าใหม่</p>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              paginatedProducts.map((p) => (
+                <TableRow
+                  key={p.id}
+                  className={`group transition-colors ${!p.is_active ? "opacity-60 bg-slate-50/50" : "hover:bg-slate-50/50"}`}
+                >
+                  <TableCell>
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden border border-slate-200/50">
+                      {p.image_url ? (
+                        <img
+                          src={p.image_url}
+                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <Package className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-slate-500">{p.code || "-"}</TableCell>
+                  <TableCell className="font-medium text-slate-700">{p.name}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-600 border border-slate-200">
+                      {formatCategory(p.category)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="font-medium">฿{Number(p.price).toLocaleString()}</TableCell>
+                  <TableCell>
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold ${
+                        p.stock <= 5 
+                          ? "bg-red-50 text-red-600 border border-red-100" 
+                          : "bg-slate-100 text-slate-700 border border-slate-200"
+                      }`}>
+                      {p.stock}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {p.is_active ? (
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full w-fit border border-emerald-100">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                        Active
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full w-fit border border-slate-200">
+                        <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                        Inactive
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right space-x-1 pr-4">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                      onClick={() => openEdit(p)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={() => openStockDialog(p)}
+                      title="Add Stock"
+                    >
+                      <Package className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
         </div>
+
+      {/* Pagination Controls */}
+      {products.length > 0 && (
+         <div className="py-4 border-t border-slate-100 flex justify-center bg-white shrink-0 mt-auto">
+             <Pagination>
+                <PaginationContent>
+                   <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                   
+                   {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                      let pNum = i + 1;
+                      if (totalPages > 5 && currentPage > 3) {
+                         pNum = currentPage - 2 + i;
+                         if (pNum > totalPages) pNum = totalPages - (4 - i);
+                      }
+                      if (pNum <= 0) return null;
+
+                      return (
+                        <PaginationItem key={pNum}>
+                           <PaginationLink 
+                              isActive={currentPage === pNum} 
+                              onClick={() => setCurrentPage(pNum)}
+                              href="#"
+                           >
+                              {pNum}
+                           </PaginationLink>
+                        </PaginationItem>
+                      )
+                   })}
+
+                   <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                </PaginationContent>
+             </Pagination>
+         </div>
+      )}
       </Card>
 
       {/* Dialog Form */}

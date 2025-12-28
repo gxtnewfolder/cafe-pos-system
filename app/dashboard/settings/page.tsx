@@ -200,13 +200,63 @@ export default function SettingsPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div className="p-4 md:p-6 lg:p-8 space-y-6">
+       <div className="flex items-center gap-3 mb-6">
+          <div className="h-10 w-10 bg-slate-100 rounded-lg animate-pulse" />
+          <div className="space-y-2">
+             <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+             <div className="h-4 w-48 bg-slate-100 rounded animate-pulse" />
+          </div>
+       </div>
+
+       <div className="grid gap-6 lg:grid-cols-2">
+          {/* Store Info Skeleton */}
+          <Card className="shadow-smooth border-slate-100">
+             <CardHeader className="pb-2">
+                <div className="h-6 w-32 bg-slate-200 rounded animate-pulse mb-2" />
+                <div className="h-4 w-48 bg-slate-100 rounded animate-pulse" />
+             </CardHeader>
+             <CardContent className="space-y-6 pt-4">
+                <div className="space-y-2">
+                   <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                   <div className="h-10 w-full bg-slate-50 rounded-lg animate-pulse" />
+                </div>
+                <div className="space-y-2">
+                   <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                   <div className="h-24 w-full bg-slate-50 rounded-xl animate-pulse border-2 border-slate-100 border-dashed" />
+                </div>
+                {[1, 2, 3].map(i => (
+                   <div key={i} className="space-y-2">
+                      <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                      <div className="h-10 w-full bg-slate-50 rounded-lg animate-pulse" />
+                   </div>
+                ))}
+                <div className="h-10 w-full bg-slate-200 rounded-lg animate-pulse mt-4" />
+             </CardContent>
+          </Card>
+
+          {/* Features Skeleton */}
+          <Card className="shadow-smooth border-slate-100">
+             <CardHeader className="py-2">
+                <div className="h-6 w-32 bg-slate-200 rounded animate-pulse mb-2" />
+                <div className="h-4 w-48 bg-slate-100 rounded animate-pulse" />
+             </CardHeader>
+             <CardContent className="space-y-3 pt-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                   <div key={i} className="p-4 rounded-xl border border-slate-100 bg-white shadow-sm flex items-center justify-between">
+                      <div className="space-y-2">
+                         <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+                         <div className="h-3 w-48 bg-slate-100 rounded animate-pulse" />
+                      </div>
+                      <div className="h-6 w-10 bg-slate-200 rounded-full animate-pulse" />
+                   </div>
+                ))}
+             </CardContent>
+          </Card>
+       </div>
+    </div>
+  );
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">

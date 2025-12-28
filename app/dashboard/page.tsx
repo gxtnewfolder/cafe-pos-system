@@ -70,10 +70,62 @@ export default function DashboardPage() {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen bg-gradient-subtle flex items-center justify-center">
-      <div className="text-center">
-        <div className="inline-block w-12 h-12 border-4 border-slate-200 border-t-slate-600 rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium">Loading Dashboard...</p>
+    <div className="p-8 space-y-6">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+           <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse mb-2" />
+           <div className="h-4 w-64 bg-slate-100 rounded animate-pulse" />
+        </div>
+        <div className="h-9 w-32 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
+
+      {/* Stats Cards Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i} className="flex flex-col shadow-sm border-slate-100">
+             <CardHeader className="flex flex-row items-center justify-between pb-2">
+               <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+               <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+             </CardHeader>
+             <CardContent>
+                <div className="h-8 w-32 bg-slate-200 rounded animate-pulse mb-2" />
+                <div className="h-4 w-20 bg-slate-100 rounded animate-pulse" />
+             </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Chart Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-6">
+         <Card className="lg:col-span-5 shadow-smooth border-slate-100">
+            <CardHeader>
+               <div className="h-6 w-48 bg-slate-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+               <div className="h-[300px] w-full bg-slate-50 rounded-xl animate-pulse" />
+            </CardContent>
+         </Card>
+         <Card className="lg:col-span-2 shadow-smooth border-slate-100">
+            <CardHeader>
+               <div className="h-6 w-32 bg-slate-200 rounded animate-pulse" />
+            </CardHeader>
+            <CardContent>
+               <div className="space-y-4">
+                  {[1, 2, 3, 4, 5].map((j) => (
+                     <div key={j} className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                           <div className="h-10 w-10 bg-slate-100 rounded-lg animate-pulse" />
+                           <div className="space-y-1">
+                              <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                              <div className="h-3 w-16 bg-slate-50 rounded animate-pulse" />
+                           </div>
+                        </div>
+                        <div className="h-4 w-12 bg-slate-100 rounded animate-pulse" />
+                     </div>
+                  ))}
+               </div>
+            </CardContent>
+         </Card>
       </div>
     </div>
   );
@@ -122,84 +174,81 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {/* 1. Stats Cards */}
-      {/* 1. Stats Cards - Vibrant Gradients */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Total Sales - Emerald Theme */}
-        <Card className="shadow-smooth hover-lift border-emerald-100 bg-gradient-to-br from-white to-emerald-50/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      {/* 1. Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Sales */}
+        <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-semibold text-emerald-900/70">ยอดขายวันนี้</CardTitle>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-200 shadow-sm flex items-center justify-center">
-              <DollarSign className="h-5 w-5 text-emerald-700" />
+            <div className="p-2 rounded-lg bg-emerald-100/50 text-emerald-700">
+              <DollarSign className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-700">
               ฿{data.stats.totalSales.toLocaleString()}
             </div>
-            <div className={`flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full w-fit ${isPositive ? "bg-emerald-100/50 text-emerald-700" : "bg-red-100/50 text-red-700"}`}>
-              <TrendingUp className={`w-3 h-3 ${isPositive ? "text-emerald-600" : "text-red-600 rotate-180"}`} />
-              <p className="text-[10px] font-medium">{percentageDisplay} จากเมื่อวาน</p>
+            <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
+               {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingUp className="h-3 w-3 rotate-180" />}
+               <span>{percentageDisplay} จากเมื่อวาน</span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Total Orders - Blue Theme */}
-        <Card className="shadow-smooth hover-lift border-blue-100 bg-gradient-to-br from-white to-blue-50/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-900/70">จำนวนออเดอร์</CardTitle>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 shadow-sm flex items-center justify-center">
-              <ShoppingBag className="h-5 w-5 text-blue-700" />
+        {/* Total Orders */}
+        <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-blue-100 bg-gradient-to-br from-white to-blue-50/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold text-blue-900/70">จำนวนออเดอร์</CardTitle>
+            <div className="p-2 rounded-lg bg-blue-100/50 text-blue-700">
+              <ShoppingBag className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700">{data.stats.totalOrders}</div>
-            <p className="text-xs text-blue-600/80 mt-1 font-medium">บิลวันนี้</p>
+            <p className="text-xs text-blue-500 mt-1">บิลที่ชำระเงินแล้ววันนี้</p>
           </CardContent>
         </Card>
 
-        {/* Average Order Value - Violet Theme */}
-        <Card className="shadow-smooth hover-lift border-violet-100 bg-gradient-to-br from-white to-violet-50/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-violet-900/70">ยอดเฉลี่ย/บิล</CardTitle>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-violet-200 shadow-sm flex items-center justify-center">
-              <Target className="h-5 w-5 text-violet-700" />
+        {/* Average Order Value */}
+        <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-violet-100 bg-gradient-to-br from-white to-violet-50/30">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-semibold text-violet-900/70">ยอดเฉลี่ย/บิล</CardTitle>
+            <div className="p-2 rounded-lg bg-violet-100/50 text-violet-700">
+              <Target className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-violet-700">
               ฿{data.stats.totalOrders > 0 ? Math.round(data.stats.totalSales / data.stats.totalOrders).toLocaleString() : 0}
             </div>
-            <p className="text-xs text-violet-600/80 mt-1 font-medium">Average Order Value</p>
+            <p className="text-xs text-violet-500 mt-1">ราคาเฉลี่ยต่อออเดอร์</p>
           </CardContent>
         </Card>
 
-        {/* Low Stock Alert - Red/Orange Theme */}
+        {/* Low Stock Alert */}
         <Card
-          className={`shadow-smooth hover-lift border-0 transition-all duration-300 ${
+          className={`flex flex-col shadow-sm hover:shadow-md transition-shadow border-0 ring-1 ${
             data.lowStockItems.length > 0 
-              ? "bg-gradient-to-br from-orange-50 to-red-50 border border-red-100 ring-1 ring-red-100/50" 
-              : "bg-white border-slate-100"
+              ? "bg-gradient-to-br from-orange-50/50 to-red-50/50 ring-red-100" 
+              : "bg-white ring-slate-100"
           }`}
         >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className={`text-sm font-medium ${data.lowStockItems.length > 0 ? 'text-red-800' : 'text-slate-600'}`}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className={`text-sm font-semibold ${data.lowStockItems.length > 0 ? 'text-red-800' : 'text-slate-600'}`}>
               สินค้าใกล้หมด
             </CardTitle>
-            <div className={`w-10 h-10 rounded-xl shadow-sm flex items-center justify-center ${
-                data.lowStockItems.length > 0 
-                  ? 'bg-gradient-to-br from-red-100 to-orange-200' 
-                  : 'bg-slate-100'
-              }`}>
-              <AlertTriangle className={`h-5 w-5 ${data.lowStockItems.length > 0 ? 'text-red-600' : 'text-slate-400'}`} />
+            <div className={`p-2 rounded-lg ${
+                data.lowStockItems.length > 0 ? 'bg-red-100/50 text-red-600' : 'bg-slate-100 text-slate-500'
+            }`}>
+              <AlertTriangle className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${data.lowStockItems.length > 0 ? 'text-red-700' : 'text-slate-800'}`}>
+            <div className={`text-2xl font-bold ${data.lowStockItems.length > 0 ? 'text-red-700' : 'text-slate-700'}`}>
               {data.lowStockItems.length}
             </div>
-            <p className={`text-xs mt-1 font-medium ${data.lowStockItems.length > 0 ? 'text-red-600' : 'text-slate-400'}`}>
-              {data.lowStockItems.length > 0 ? "รายการที่ต้องเติมสต็อก!" : "Stock ปลอดภัย"}
+             <p className={`text-xs mt-1 ${data.lowStockItems.length > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
+              {data.lowStockItems.length > 0 ? 'รายการที่ต้องเติมสต็อก' : 'สถานะปกติ'}
             </p>
           </CardContent>
         </Card>

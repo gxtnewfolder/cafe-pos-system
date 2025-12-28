@@ -18,6 +18,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Order {
   id: string;
@@ -65,29 +74,91 @@ export default function OrderHistoryPage() {
       order.customer?.phone?.includes(lowerSearch)
     );
     setFilteredOrders(filtered);
+    setCurrentPage(1); // Reset to page 1 on search
   }, [search, orders]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-[80vh] items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin w-10 h-10 text-slate-600 mx-auto mb-2" />
-          <p className="text-slate-500">Loading orders...</p>
+  // Pagination Logic
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(7);
+
+  useEffect(() => {
+    const calculateItems = () => {
+      const vh = window.innerHeight;
+      // Adjusted reserved space: Header (80) + Filter (80) + CardHeader (60) + Pagination (60) + Padding (40) = ~320
+      // Reducing buffer to ensure we fill space
+      const availableHeight = vh - 260; 
+      const rowHeight = 60; 
+      const items = Math.floor(availableHeight / rowHeight);
+      setItemsPerPage(Math.max(5, items));
+    }
+    calculateItems();
+    window.addEventListener('resize', calculateItems);
+    return () => window.removeEventListener('resize', calculateItems);
+  }, []);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+     (currentPage - 1) * itemsPerPage,
+     currentPage * itemsPerPage
+  );
+
+  if (isLoading) return (
+    <div className="p-4 md:p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+           <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse mb-2" />
+           <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
         </div>
       </div>
-    );
-  }
+
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+        <div className="flex-1 w-full h-10 bg-slate-100 rounded-lg animate-pulse" />
+        <div className="w-48 h-10 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
+
+      <Card className="shadow-smooth border-slate-100">
+        <div className="rounded-xl overflow-hidden border border-slate-100">
+          <Table>
+             <TableHeader className="bg-slate-50">
+               <TableRow>
+                 {[1,2,3,4,5,6].map(i => (
+                    <TableHead key={i}><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></TableHead>
+                 ))}
+               </TableRow>
+             </TableHeader>
+             <TableBody>
+               {Array.from({ length: 5 }).map((_, i) => (
+                 <TableRow key={i}>
+                   <TableCell><div className="h-4 w-16 bg-slate-100 rounded animate-pulse" /></TableCell>
+                   <TableCell>
+                      <div className="space-y-2">
+                        <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
+                        <div className="h-3 w-24 bg-slate-50 rounded animate-pulse" />
+                      </div>
+                   </TableCell>
+                   <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
+                   <TableCell><div className="h-6 w-24 bg-slate-100 rounded-full animate-pulse" /></TableCell>
+                   <TableCell><div className="h-6 w-20 bg-slate-100 rounded-full animate-pulse" /></TableCell>
+                   <TableCell className="text-right"><div className="h-8 w-24 bg-slate-100 rounded-lg animate-pulse ml-auto" /></TableCell>
+                 </TableRow>
+               ))}
+             </TableBody>
+          </Table>
+        </div>
+      </Card>
+    </div>
+  );
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between shrink-0">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">ประวัติการขาย</h2>
           <p className="text-slate-500 text-sm mt-1">ดูรายการขายทั้งหมด</p>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm shrink-0">
         <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
@@ -104,8 +175,8 @@ export default function OrderHistoryPage() {
         </div>
       </div>
 
-      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl">
-        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl gap-0 flex flex-col min-h-0 flex-1 pt-4 pb-2">
+        <div className="p-4 pt-0 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
           <CardTitle className="text-base text-slate-700 font-bold flex items-center gap-2">
             <div className="w-2 h-6 bg-slate-800 rounded-full"></div>
             รายการออเดอร์ล่าสุด
@@ -114,7 +185,7 @@ export default function OrderHistoryPage() {
             {filteredOrders.length} รายการ
           </Badge>
         </div>
-        <CardContent className="p-0">
+        <CardContent className="p-0 flex-1 overflow-auto">
           <Table>
             <TableHeader className="bg-slate-50 border-b border-slate-100">
               <TableRow className="hover:bg-slate-50/50">
@@ -128,17 +199,17 @@ export default function OrderHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredOrders.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="h-48 border-0">
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 w-full">
-                      <Search className="w-10 h-10 mb-2 opacity-20" />
-                      <span>ไม่พบข้อมูลออเดอร์ที่ค้นหา</span>
-                    </div>
-                  </TableCell>
-                </TableRow>
+              {paginatedOrders.length === 0 ? (
+                 <TableRow>
+                   <TableCell colSpan={7} className="h-48 border-0">
+                     <div className="flex flex-col items-center justify-center h-full text-slate-400 w-full">
+                       <Search className="w-10 h-10 mb-2 opacity-20" />
+                       <span>ไม่พบข้อมูลออเดอร์ที่ค้นหา</span>
+                     </div>
+                   </TableCell>
+                 </TableRow>
               ) : (
-                filteredOrders.map((order) => (
+                paginatedOrders.map((order) => (
                   <TableRow key={order.id} className="group hover:bg-slate-50/50 transition-colors">
                     <TableCell className="font-mono text-xs font-medium text-slate-500 group-hover:text-slate-800 transition-colors">
                       #{order.id.substring(0, 8)}
@@ -204,6 +275,52 @@ export default function OrderHistoryPage() {
             </TableBody>
           </Table>
         </CardContent>
+
+        {/* Pagination Controls */}
+        {filteredOrders.length > 0 && (
+          <div className="py-4 border-t border-slate-100 flex justify-center bg-white shrink-0 mt-auto">
+             <Pagination>
+                <PaginationContent>
+                   <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                   
+                   {Array.from({ length: Math.min(5, totalPages) }).map((_, i) => {
+                      let pNum = i + 1;
+                      if (totalPages > 5 && currentPage > 3) {
+                         pNum = currentPage - 2 + i;
+                         if (pNum > totalPages) pNum = totalPages - (4 - i);
+                      }
+                      if (pNum <= 0) return null;
+
+                      return (
+                        <PaginationItem key={pNum}>
+                           <PaginationLink 
+                              isActive={currentPage === pNum} 
+                              onClick={() => setCurrentPage(pNum)}
+                              href="#"
+                           >
+                              {pNum}
+                           </PaginationLink>
+                        </PaginationItem>
+                      )
+                   })}
+
+                   <PaginationItem>
+                      <PaginationNext 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        href="#"
+                      />
+                   </PaginationItem>
+                </PaginationContent>
+             </Pagination>
+          </div>
+        )}
       </Card>
     </div>
   );
