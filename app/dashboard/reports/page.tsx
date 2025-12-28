@@ -464,7 +464,7 @@ export default function ReportsPage() {
             </CardContent>
           </Card>
       {/* Orders Table */}
-      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl lg:col-span-3">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl lg:col-span-3 gap-0 py-0">
           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
             <CardTitle className="text-base text-slate-700 font-bold flex items-center gap-2">
               <div className="w-2 h-6 bg-slate-800 rounded-full"></div>
