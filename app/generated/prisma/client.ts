@@ -64,3 +64,13 @@ export type OrderItem = Prisma.OrderItemModel
  * 
  */
 export type User = Prisma.UserModel
+/**
+ * Model StoreSettings
+ * 
+ */
+export type StoreSettings = Prisma.StoreSettingsModel
+/**
+ * Model FeatureFlag
+ * 
+ */
+export type FeatureFlag = Prisma.FeatureFlagModel

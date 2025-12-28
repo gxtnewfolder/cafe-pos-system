@@ -100,3 +100,28 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+// 6. การตั้งค่าร้าน
+model StoreSettings {
+  id          String   @id @default("default")
+  store_name  String   @default("Pocket Café")
+  store_logo  String?  // URL ของโลโก้
+  address     String?
+  phone       String?
+  tax_id      String?  // เลขประจำตัวผู้เสียภาษี
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("store_settings")
+}
+
+// 7. Feature Flags (เปิด/ปิด features สำหรับขาย addon)
+model FeatureFlag {
+  id          String   @id
+  name        String
+  enabled     Boolean  @default(false)
+  description String?
+  is_addon    Boolean  @default(false) // ถ้าเป็น addon จะแสดงปุ่มซื้อ
+  
+  @@map("feature_flags")
+}

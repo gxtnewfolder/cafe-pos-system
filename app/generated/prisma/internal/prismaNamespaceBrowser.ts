@@ -55,7 +55,9 @@ export const ModelName = {
   Customer: 'Customer',
   Order: 'Order',
   OrderItem: 'OrderItem',
-  User: 'User'
+  User: 'User',
+  StoreSettings: 'StoreSettings',
+  FeatureFlag: 'FeatureFlag'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -140,6 +142,31 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const StoreSettingsScalarFieldEnum = {
+  id: 'id',
+  store_name: 'store_name',
+  store_logo: 'store_logo',
+  address: 'address',
+  phone: 'phone',
+  tax_id: 'tax_id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type StoreSettingsScalarFieldEnum = (typeof StoreSettingsScalarFieldEnum)[keyof typeof StoreSettingsScalarFieldEnum]
+
+
+export const FeatureFlagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  enabled: 'enabled',
+  description: 'description',
+  is_addon: 'is_addon'
+} as const
+
+export type FeatureFlagScalarFieldEnum = (typeof FeatureFlagScalarFieldEnum)[keyof typeof FeatureFlagScalarFieldEnum]
 
 
 export const SortOrder = {
