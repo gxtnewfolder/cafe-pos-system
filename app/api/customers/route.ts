@@ -82,6 +82,23 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Customer ID is required" }, { status: 400 });
     }
 
+    // ถ้ามีการเปลี่ยนเบอร์โทร ต้องเช็คว่าเบอร์ใหม่ซ้ำกับคนอื่นหรือไม่
+    if (phone !== undefined) {
+      const existingWithPhone = await prisma.customer.findFirst({
+        where: {
+          phone,
+          NOT: { id }, // ไม่รวมตัวเอง
+        },
+      });
+
+      if (existingWithPhone) {
+        return NextResponse.json(
+          { error: "เบอร์โทรนี้ถูกใช้งานแล้ว" },
+          { status: 400 }
+        );
+      }
+    }
+
     const customer = await prisma.customer.update({
       where: { id },
       data: {

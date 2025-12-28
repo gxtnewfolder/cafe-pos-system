@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { useFeatures } from "@/lib/features";
 import { useStore } from "@/lib/store";
+import { StoreSettings, FeatureFlag } from "@/app/generated/prisma/client";
+import { calculateDependentUpdates } from "@/lib/feature-dependencies";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,23 +31,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-
-interface StoreSettings {
-  id: string;
-  store_name: string;
-  store_logo: string | null;
-  address: string | null;
-  phone: string | null;
-  tax_id: string | null;
-}
-
-interface FeatureFlag {
-  id: string;
-  name: string;
-  enabled: boolean;
-  description: string | null;
-  is_addon: boolean;
-}
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<StoreSettings | null>(null);
@@ -76,6 +61,13 @@ export default function SettingsPage() {
         fetch("/api/settings"),
         fetch("/api/settings/features")
       ]);
+
+      if (!settingsRes.ok) {
+        throw new Error(`Settings API error: ${settingsRes.status} ${settingsRes.statusText}`);
+      }
+      if (!featuresRes.ok) {
+        throw new Error(`Features API error: ${featuresRes.status} ${featuresRes.statusText}`);
+      }
 
       const settingsData = await settingsRes.json();
       const featuresData = await featuresRes.json();
@@ -168,33 +160,24 @@ export default function SettingsPage() {
 
   const handleToggleFeature = async (featureId: string, enabled: boolean) => {
     try {
-      // Cascade disable dependent features when parent is disabled
-      const dependentFeatures: Record<string, string[]> = {
-        members: ["points"], // ถ้าปิด members -> ปิด points ด้วย
-      };
+      // Calculate calculated updates via shared logic (centralized dependency resolution)
+      // Note: We cast features to the type expected if needed, or ensure compatibility
+      const featuresToUpdate = calculateDependentUpdates(features, featureId, enabled);
       
-      const featuresToUpdate = [{ id: featureId, enabled }];
-      
-      // ถ้าปิด feature ที่มี dependent features
-      if (!enabled && dependentFeatures[featureId]) {
-        dependentFeatures[featureId].forEach(depId => {
-          const depFeature = features.find(f => f.id === depId);
-          if (depFeature?.enabled) {
-            featuresToUpdate.push({ id: depId, enabled: false });
-          }
-        });
+      // Batch update on server
+      const res = await fetch("/api/settings/features/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates: featuresToUpdate })
+      });
+
+      if (!res.ok) {
+        throw new Error("Update failed");
       }
-      
-      // Update all features
-      for (const update of featuresToUpdate) {
-        await fetch("/api/settings/features", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: update.id, enabled: update.enabled })
-        });
-      }
-      
-      // Update local state
+
+      // Update local state based on the atomic updates we calculated
+      // Ideally we could use the response if it returns the updated records, 
+      // but for optimistic-like speed (after await) reusing the calculated list is fine.
       setFeatures(prev => 
         prev.map(f => {
           const update = featuresToUpdate.find(u => u.id === f.id);
@@ -207,9 +190,9 @@ export default function SettingsPage() {
       
       // Show appropriate toast message
       if (featuresToUpdate.length > 1) {
-        toast.success(`ปิดใช้งาน ${featuresToUpdate.length} features (รวม features ที่ต้องพึ่งพา)`);
+        toast.success(`อัพเดท ${featuresToUpdate.length} features (รวม features ที่ต้องพึ่งพา)`);
       } else {
-        toast.success(enabled ? "เปิดใช้งาน Feature" : "ปิดใช้งาน Feature");
+        toast.success(enabled ? "เปิดใช้งาน Feature เรียบร้อย" : "ปิดใช้งาน Feature เรียบร้อย");
       }
     } catch (error) {
       toast.error("อัพเดทไม่สำเร็จ");
@@ -287,7 +270,7 @@ export default function SettingsPage() {
                       src={storeLogo} 
                       alt="Store Logo" 
                       className="h-20 w-auto object-contain"
-                      onError={(e) => (e.currentTarget.src = '/placeholder-logo.png')}
+                      onError={(e) => (e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23cbd5e1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"%3E%3Cpath d="m6 9 6 6 6-6"/%3E%3C/svg%3E')}
                     />
                   </div>
                   <div className="flex gap-2 mt-2">

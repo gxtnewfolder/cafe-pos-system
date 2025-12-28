@@ -87,7 +87,6 @@ export default function PaymentDialog({
                       orderId={successData.orderId}
                       date={successData.date}
                       items={successData.items}
-                      total={totalAmount}
                     />
                   }
                   fileName={`receipt-${successData.orderId.substring(0, 8)}.pdf`}

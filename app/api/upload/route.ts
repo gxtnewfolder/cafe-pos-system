@@ -37,8 +37,21 @@ export async function POST(req: Request) {
       // Directory might already exist
     }
 
-    // Generate unique filename
-    const ext = file.name.split(".").pop();
+    // Derive safe extension from validated MIME type (not from user filename)
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/gif": "gif",
+      "image/webp": "webp",
+    };
+    const ext = mimeToExt[file.type];
+    if (!ext) {
+      return NextResponse.json(
+        { error: "Invalid file type" },
+        { status: 400 }
+      );
+    }
+
     const filename = `logo-${Date.now()}.${ext}`;
     const filepath = path.join(uploadsDir, filename);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Users,
   Search,
@@ -95,13 +95,29 @@ export default function MembersPage() {
     }
   };
 
+  // Search timeout ref
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    // Debounce search
-    const timeoutId = setTimeout(() => {
+    
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout
+    searchTimeoutRef.current = setTimeout(() => {
       fetchCustomers(value);
     }, 300);
-    return () => clearTimeout(timeoutId);
   };
 
   const openAddDialog = () => {

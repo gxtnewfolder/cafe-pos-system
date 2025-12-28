@@ -2,13 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 
-interface FeatureFlag {
-  id: string;
-  name: string;
-  enabled: boolean;
-  description: string | null;
-  is_addon: boolean;
-}
+import { FeatureFlag } from "./features-server";
 
 interface FeatureContextType {
   features: FeatureFlag[];
@@ -68,7 +62,7 @@ export function useFeatures() {
 // Simple hook for checking if a feature is enabled
 export function useFeatureEnabled(featureId: string): boolean {
   const { isEnabled, isLoading } = useFeatures();
-  // Return true while loading to prevent flash of hidden content
-  if (isLoading) return true;
+  // Return false while loading for secure-by-default (hide until confirmed enabled)
+  if (isLoading) return false;
   return isEnabled(featureId);
 }

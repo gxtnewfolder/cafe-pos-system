@@ -38,6 +38,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
+      } else {
+        const errorText = await res.text();
+        console.error(`Failed to fetch store settings: ${res.status} ${res.statusText}`, errorText);
+        setSettings(defaultSettings);
       }
     } catch (error) {
       console.error("Failed to fetch store settings:", error);
