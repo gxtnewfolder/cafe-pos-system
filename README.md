@@ -53,6 +53,16 @@
 - **Logo Upload**: อัปโหลดและแสดงผลโลโก้ร้าน
 - **Feature Flags**: เปิด/ปิด Features ต่างๆ ของระบบ (สำหรับ Addon)
 
+#### Reports (รายงานยอดขาย) 🆕
+- **Sales Summary**: สรุปยอดขาย, จำนวนออเดอร์, ยอดเฉลี่ยต่อบิล
+- **Period Filters**: กรองตามช่วงเวลา (วันนี้ / 7 วัน / 30 วัน)
+- **Custom Date Range**: เลือกช่วงวันที่ต้องการเอง
+- **Sales Chart**: กราฟยอดขายรายวัน (Recharts)
+- **Top Products**: สินค้าขายดี Top 5 พร้อมยอดรายได้
+- **Orders Table**: ตารางออเดอร์พร้อม Pagination
+- **Excel Export**: ส่งออกรายงานเป็น Excel (.xlsx)
+- **PDF Export**: ส่งออกรายงานเป็น PDF พร้อม Styling
+
 ---
 
 ### 🔐 Security & Authentication
@@ -87,7 +97,8 @@
 | **Charts** | [Recharts](https://recharts.org/) |
 | **Icons** | [Lucide React](https://lucide.dev/) |
 | **QR Code** | promptpay-qr, qrcode.react |
-| **PDF** | @react-pdf/renderer |
+| **PDF** | jsPDF |
+| **Excel** | xlsx |
 | **Toast** | Sonner |
 
 ---
@@ -103,6 +114,7 @@ cafe-pos-system/
 │   │   ├── dashboard/        # Dashboard stats
 │   │   ├── orders/           # Order management
 │   │   ├── products/         # Product CRUD
+│   │   ├── reports/          # Sales reports API
 │   │   ├── settings/         # Store settings
 │   │   └── upload/           # File upload
 │   ├── components/           # App-specific components
@@ -112,6 +124,7 @@ cafe-pos-system/
 │   │   ├── orders/           # Orders management
 │   │   ├── products/         # Products management
 │   │   ├── members/          # Members/CRM
+│   │   ├── reports/          # Sales reports
 │   │   └── settings/         # Settings
 │   ├── login/                # Login page
 │   └── layout.tsx            # Root layout
@@ -120,7 +133,9 @@ cafe-pos-system/
 ├── lib/
 │   ├── db.ts                 # Prisma client
 │   ├── features.tsx          # Feature Flags provider
-│   └── store.tsx             # Global store context
+│   ├── store.tsx             # Global store context
+│   ├── export-excel.ts       # Excel export utility
+│   └── export-pdf.ts         # PDF export utility
 ├── prisma/
 │   └── schema.prisma         # Database schema
 └── public/                   # Static assets & uploads
