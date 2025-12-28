@@ -175,7 +175,7 @@ export default function MemberDialog({ isOpen, onClose, onCustomerSelected }: Me
               </Button>
               <Button 
                 variant="ghost" 
-                className="w-full text-slate-500 hover:text-slate-700" 
+                className="w-full text-sky-500 hover:text-sky-700" 
                 onClick={() => setIsRegisterMode(false)}
               >
                 ← กลับไปหน้าค้นหา
