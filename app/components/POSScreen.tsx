@@ -93,8 +93,11 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
   // Filter products based on category and search
   const filteredProducts = products.filter((product) => {
+    const normalizedProductCategory = product.category.toLowerCase().replace('_', '-');
+    const normalizedSelectedCategory = selectedCategory.toLowerCase().replace('_', '-');
+
     const matchesCategory = selectedCategory === "ALL" || 
-      product.category.toLowerCase() === selectedCategory.toLowerCase().replace('_', '-');
+      normalizedProductCategory === normalizedSelectedCategory;
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -375,7 +378,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                   onClick={() => {
                     if (!isOutOfStock) addToCart(product);
                   }}
-                  className={`group relative transition-all duration-500 border-2 overflow-hidden ${
+                  className={`group relative transition-all duration-500 border-2 overflow-hidden pt-2 ${
                     isOutOfStock
                       ? "border-transparent opacity-60 grayscale cursor-not-allowed bg-slate-100"
                       : "cursor-pointer bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] border-transparent"
