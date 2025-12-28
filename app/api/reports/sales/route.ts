@@ -68,9 +68,13 @@ export async function GET(request: Request) {
       where: { order: whereClause },
       select: {
         product_id: true,
-        name: true,
         quantity: true,
         price: true,
+        product: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
@@ -78,7 +82,7 @@ export async function GET(request: Request) {
     const productSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
     orderItems.forEach((item) => {
       if (!productSales[item.product_id]) {
-        productSales[item.product_id] = { name: item.name, quantity: 0, revenue: 0 };
+        productSales[item.product_id] = { name: item.product.name, quantity: 0, revenue: 0 };
       }
       productSales[item.product_id].quantity += item.quantity;
       productSales[item.product_id].revenue += Number(item.price) * item.quantity;
