@@ -195,7 +195,6 @@ interface ReceiptProps {
   orderId: string;
   date: Date;
   items: any[];
-  total: number;
 }
 
 export const Receipt = ({ orderId, date, items }: ReceiptProps) => {

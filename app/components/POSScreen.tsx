@@ -19,12 +19,15 @@ import {
   Cake,
   Wine,
   Grid3X3,
+  ShoppingBasket,
 } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { toast } from "sonner";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useFeatures } from "@/lib/features";
+import { useStore } from "@/lib/store";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -79,6 +82,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { isEnabled } = useFeatures();
+  const { settings: storeSettings } = useStore();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -223,10 +228,16 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
     <div className="flex h-screen w-full bg-gradient-subtle overflow-hidden">
       {/* --- LEFT: Product Grid --- */}
       <div className="flex-1 flex flex-col h-full">
-        <header className="h-12 lg:h-14 glass border-b border-slate-200/50 px-3 md:px-4 flex items-center justify-between shadow-smooth z-10 shrink-0">
+        <header className="h-14 lg:h-16 glass border-b border-slate-200/50 px-3 md:px-4 flex items-center justify-between shadow-smooth z-10 shrink-0">
           <h1 className="text-base lg:text-lg font-bold text-slate-800 flex items-center gap-1.5">
-            <span className="text-lg lg:text-xl">☕</span>
-            <span className="bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text hidden sm:inline">Pocket Café</span>
+            {storeSettings?.store_logo ? (
+              <img src={storeSettings.store_logo} alt="Logo" className="h-5 w-auto object-contain" />
+            ) : (
+              <span className="text-base">☕</span>
+            )}
+            <span className="text-slate-700 font-medium hidden sm:inline">
+              {storeSettings?.store_name || "Pocket Café"}
+            </span>
             <Badge variant="secondary" className="ml-1 bg-slate-100 text-slate-700 font-semibold text-[10px]">POS</Badge>
           </h1>
 
@@ -242,34 +253,48 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           </Link>
 
           <div className="flex items-center gap-3">
-            {selectedCustomer ? (
-              <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 rounded-full border border-blue-100/80 animate-in slide-in-from-right shadow-sm">
-                <div className="flex flex-col items-end leading-none">
-                  <span className="text-sm font-bold text-blue-700">
-                    {selectedCustomer.name}
-                  </span>
-                  <span className="text-xs text-blue-500 flex items-center gap-1">
-                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse-soft"></span>
-                    แต้มสะสม: {selectedCustomer.points}
-                  </span>
-                </div>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-8 w-8 rounded-full text-blue-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
-                  onClick={() => setSelectedCustomer(null)}
-                >
-                  <LogOut className="w-4 h-4" />
-                </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="gap-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200"
-                onClick={() => setIsMemberOpen(true)}
-              >
-                <User className="w-4 h-4" /> สมาชิก
-              </Button>
+            {isEnabled("members") && (
+              <>
+                {selectedCustomer ? (
+                  <div className="flex items-center gap-1.5 bg-gradient-to-r from-sky-50 to-blue-50 pl-2 pr-1 py-1 rounded-full border border-sky-200/80 animate-in slide-in-from-right shadow-sm">
+                    {/* Avatar */}
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-white text-[10px] font-bold">
+                      {selectedCustomer.name?.charAt(0)?.toUpperCase() || 'ล'}
+                    </div>
+                    
+                    {/* Info */}
+                    <div className="flex flex-col items-start leading-none">
+                      <span className="text-xs font-semibold text-sky-800">
+                        คุณ{selectedCustomer.name}
+                      </span>
+                      {isEnabled("points") && (
+                        <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
+                          ⭐ {selectedCustomer.points.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Close Button */}
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-5 w-5 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors duration-200"
+                      onClick={() => setSelectedCustomer(null)}
+                    >
+                      <LogOut className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 h-8 text-xs bg-gradient-to-r from-sky-50 to-blue-50 border-sky-200 text-sky-700 hover:border-sky-300 hover:bg-sky-100 transition-all"
+                    onClick={() => setIsMemberOpen(true)}
+                  >
+                    <User className="w-3.5 h-3.5" /> สมาชิก
+                  </Button>
+                )}
+              </>
             )}
           </div>
 
@@ -431,7 +456,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
               <ShoppingCart className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
             </div>
-            <span className="hidden xl:inline">Current Order</span>
+            <span className="hidden xl:inline">รายการสั่งซื้อ</span>
             <span className="xl:hidden">Order</span>
           </h2>
           <Badge variant="secondary" className="text-slate-700 bg-slate-100 font-semibold px-2 lg:px-3 text-xs">
@@ -441,12 +466,14 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
         <ScrollArea className="flex-1 p-2 lg:p-5 scrollbar-thin">
           {cart.length === 0 ? (
-            <div className="h-[50vh] flex flex-col items-center justify-center text-slate-300 gap-4">
-              <div className="p-6 rounded-full bg-slate-50">
-                <ShoppingBasketIcon />
+            <div className="h-[40vh] flex flex-col items-center justify-center text-slate-300 gap-3">
+              <div className="p-5 rounded-full bg-gradient-to-br from-slate-100 to-slate-50 shadow-inner">
+                <ShoppingBasket className="w-10 h-10 text-slate-300" strokeWidth={1.5} />
               </div>
-              <p className="text-sm font-medium text-slate-400">No items in cart</p>
-              <p className="text-xs text-slate-300">Tap products to add them here</p>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-400">ยังไม่มีสินค้า</p>
+                <p className="text-xs text-slate-300 mt-1">แตะสินค้าเพื่อเพิ่มลงตะกร้า</p>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
@@ -501,6 +528,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           )}
         </ScrollArea>
 
+        {/* Cart Summary */}
         <div className="p-2 lg:p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-3 lg:space-y-4 shrink-0">
           <div className="space-y-1.5 lg:space-y-2 bg-white rounded-xl p-2 lg:p-4 shadow-sm border border-slate-100">
             <div className="flex justify-between text-slate-500 text-xs lg:text-sm">
@@ -515,7 +543,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             <div className="flex justify-between items-center">
               <span className="font-bold text-slate-700 text-xs lg:text-sm">Total</span>
               <div className="text-right">
-                <span className="text-lg lg:text-2xl font-bold text-slate-800">
+                <span className="text-lg lg:text-xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
                 </span>
               </div>
@@ -552,30 +580,5 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
         onCustomerSelected={setSelectedCustomer}
       />
     </div>
-  );
-}
-
-function ShoppingBasketIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="64"
-      height="64"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m5 11 4-7" />
-      <path d="m19 11-4-7" />
-      <path d="M2 11h20" />
-      <path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8c.9 0 1.8-.7 2-1.6l1.7-7.4" />
-      <path d="m9 11 1 9" />
-      <path d="m4.5 11 .1 9" />
-      <path d="m12 11 2 9" />
-      <path d="m20 11-1 9" />
-    </svg>
   );
 }

@@ -6,6 +6,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { Loader2, CheckCircle2, Printer } from "lucide-react";
 import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Receipt } from "./Receipt";
+import { useFeatures } from "@/lib/features";
 
 import {
   Dialog,
@@ -40,8 +41,9 @@ export default function PaymentDialog({
   onRefresh,
   successData,
 }: PaymentDialogProps) {
-  const PROMPTPAY_ID = "0812345678"; // ใส่เบอร์จริงของคุณ
+  const PROMPTPAY_ID = "0993528844"; // ใส่เบอร์จริงของคุณ
   const [qrCodePayload, setQrCodePayload] = useState("");
+  const { isEnabled } = useFeatures();
 
   const isSuccess = !!successData;
 
@@ -77,35 +79,36 @@ export default function PaymentDialog({
             <p className="text-slate-500 mb-8">บันทึกยอดขายเรียบร้อยแล้ว</p>
 
             <div className="flex flex-col gap-3 w-full">
-              {/* ปุ่ม Download PDF */}
-              <PDFDownloadLink
-                document={
-                  <Receipt
-                    orderId={successData.orderId}
-                    date={successData.date}
-                    items={successData.items}
-                    total={totalAmount}
-                  />
-                }
-                fileName={`receipt-${successData.orderId.substring(0, 8)}.pdf`}
-                className="w-full"
-              >
-                {/* @ts-ignore */}
-                {({ loading }) => (
-                  <Button
-                    className="w-full h-14 text-lg gap-2 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 shadow-sm transition-all hover:shadow-md"
-                    variant="outline"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      <Printer className="w-5 h-5" />
-                    )}
-                    {loading ? "Generating..." : "Print / Download Receipt"}
-                  </Button>
-                )}
-              </PDFDownloadLink>
+              {/* ปุ่ม Download PDF - แสดงเมื่อ receipts feature เปิดใช้งาน */}
+              {isEnabled("receipts") && (
+                <PDFDownloadLink
+                  document={
+                    <Receipt
+                      orderId={successData.orderId}
+                      date={successData.date}
+                      items={successData.items}
+                    />
+                  }
+                  fileName={`receipt-${successData.orderId.substring(0, 8)}.pdf`}
+                  className="w-full"
+                >
+                  {/* @ts-ignore */}
+                  {({ loading }) => (
+                    <Button
+                      className="w-full h-14 text-lg gap-2 bg-white hover:bg-slate-50 border-2 border-slate-200 text-slate-700 shadow-sm transition-all hover:shadow-md"
+                      variant="outline"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <Printer className="w-5 h-5" />
+                      )}
+                      {loading ? "Generating..." : "Print / Download Receipt"}
+                    </Button>
+                  )}
+                </PDFDownloadLink>
+              )}
 
               <Button
                 onClick={handleNextOrder}
