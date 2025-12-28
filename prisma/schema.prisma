@@ -117,8 +117,8 @@ model StoreSettings {
 
 // 7. Feature Flags (เปิด/ปิด features สำหรับขาย addon)
 model FeatureFlag {
-  id          String   @id
-  name        String
+  id          String   @id @default(uuid())
+  name        String   @unique
   enabled     Boolean  @default(false)
   description String?
   is_addon    Boolean  @default(false) // ถ้าเป็น addon จะแสดงปุ่มซื้อ

@@ -194,14 +194,14 @@ export type FeatureFlagOrderByWithRelationInput = {
 
 export type FeatureFlagWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  name?: string
   AND?: Prisma.FeatureFlagWhereInput | Prisma.FeatureFlagWhereInput[]
   OR?: Prisma.FeatureFlagWhereInput[]
   NOT?: Prisma.FeatureFlagWhereInput | Prisma.FeatureFlagWhereInput[]
-  name?: Prisma.StringFilter<"FeatureFlag"> | string
   enabled?: Prisma.BoolFilter<"FeatureFlag"> | boolean
   description?: Prisma.StringNullableFilter<"FeatureFlag"> | string | null
   is_addon?: Prisma.BoolFilter<"FeatureFlag"> | boolean
-}, "id">
+}, "id" | "name">
 
 export type FeatureFlagOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -226,7 +226,7 @@ export type FeatureFlagScalarWhereWithAggregatesInput = {
 }
 
 export type FeatureFlagCreateInput = {
-  id: string
+  id?: string
   name: string
   enabled?: boolean
   description?: string | null
@@ -234,7 +234,7 @@ export type FeatureFlagCreateInput = {
 }
 
 export type FeatureFlagUncheckedCreateInput = {
-  id: string
+  id?: string
   name: string
   enabled?: boolean
   description?: string | null
@@ -258,7 +258,7 @@ export type FeatureFlagUncheckedUpdateInput = {
 }
 
 export type FeatureFlagCreateManyInput = {
-  id: string
+  id?: string
   name: string
   enabled?: boolean
   description?: string | null

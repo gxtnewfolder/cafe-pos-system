@@ -73,13 +73,13 @@ async function main() {
   const customers = [
     {
       phone: '0812345678',
-      name: 'คุณลูกค้า ขาจร',
+      name: 'ลูกค้า ขาจร',
       points: 0,
       total_spent: 0,
     },
     {
       phone: '0999999999',
-      name: 'คุณสมชาย (VIP)',
+      name: 'สมชาย (VIP)',
       points: 15, // มีแต้มสะสมอยู่แล้ว 15 แต้ม (แลกฟรีได้แล้ว!)
       total_spent: 5600,
     },
