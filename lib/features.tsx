@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { useSession } from "next-auth/react";
 
 import { FeatureFlag } from "./features-server";
 
@@ -16,6 +17,7 @@ const FeatureContext = createContext<FeatureContextType | undefined>(undefined);
 export function FeatureProvider({ children }: { children: ReactNode }) {
   const [features, setFeatures] = useState<FeatureFlag[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { status } = useSession();
 
   const fetchFeatures = async () => {
     try {
@@ -32,8 +34,10 @@ export function FeatureProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Fetch features when session status changes (e.g. login/logout)
+    // or initially when mounting
     fetchFeatures();
-  }, []);
+  }, [status]);
 
   const isEnabled = (featureId: string): boolean => {
     const feature = features.find(f => f.id === featureId);
