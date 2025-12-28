@@ -210,78 +210,93 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <Card className="shadow-smooth border-0 bg-white overflow-hidden">
+      <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl">
         <div className="overflow-x-auto">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+          <TableHeader className="bg-slate-50 border-b border-slate-100">
+            <TableRow className="hover:bg-slate-50/50">
+              <TableHead className="w-[80px] font-semibold text-slate-700">Image</TableHead>
+              <TableHead className="font-semibold text-slate-700">Code</TableHead>
+              <TableHead className="font-semibold text-slate-700">Name</TableHead>
+              <TableHead className="font-semibold text-slate-700">Category</TableHead>
+              <TableHead className="font-semibold text-slate-700">Price</TableHead>
+              <TableHead className="font-semibold text-slate-700">Stock</TableHead>
+              <TableHead className="font-semibold text-slate-700">Status</TableHead>
+              <TableHead className="text-right font-semibold text-slate-700 pr-6">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {products.map((p) => (
               <TableRow
                 key={p.id}
-                className={!p.is_active ? "opacity-50 bg-slate-50" : ""}
+                className={`group transition-colors ${!p.is_active ? "opacity-60 bg-slate-50/50" : "hover:bg-slate-50/50"}`}
               >
                 <TableCell>
-                  {p.image_url && (
-                    <img
-                      src={p.image_url}
-                      className="w-10 h-10 rounded object-cover"
-                    />
-                  )}
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 overflow-hidden border border-slate-200/50">
+                    {p.image_url ? (
+                      <img
+                        src={p.image_url}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Package className="w-5 h-5" />
+                      </div>
+                    )}
+                  </div>
                 </TableCell>
-                <TableCell>{p.code}</TableCell>
-                <TableCell className="font-medium">{p.name}</TableCell>
+                <TableCell className="font-mono text-xs text-slate-500">{p.code || "-"}</TableCell>
+                <TableCell className="font-medium text-slate-700">{p.name}</TableCell>
                 <TableCell>
-                  <span className="px-2 py-1 rounded bg-slate-100 text-xs">
+                  <span className="inline-flex items-center px-2 py-1 rounded-md bg-slate-100 text-xs font-medium text-slate-600 border border-slate-200">
                     {formatCategory(p.category)}
                   </span>
                 </TableCell>
-                <TableCell>฿{Number(p.price)}</TableCell>
+                <TableCell className="font-medium">฿{Number(p.price).toLocaleString()}</TableCell>
                 <TableCell>
-                  <span
-                    className={`font-bold ${
-                      p.stock <= 5 ? "text-red-500" : "text-slate-700"
-                    }`}
-                  >
+                  <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-bold ${
+                      p.stock <= 5 
+                        ? "bg-red-50 text-red-600 border border-red-100" 
+                        : "bg-slate-100 text-slate-700 border border-slate-200"
+                    }`}>
                     {p.stock}
-                  </span>
+                  </div>
                 </TableCell>
                 <TableCell>
                   {p.is_active ? (
-                    <span className="text-green-600">Active</span>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full w-fit border border-emerald-100">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                      Active
+                    </div>
                   ) : (
-                    <span className="text-red-400">Inactive</span>
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full w-fit border border-slate-200">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                      Inactive
+                    </div>
                   )}
                 </TableCell>
-                <TableCell className="text-right space-x-2">
+                <TableCell className="text-right space-x-1 pr-4">
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
+                    className="h-8 w-8 text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                     onClick={() => openEdit(p)}
                   >
                     <Pencil className="w-4 h-4" />
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="icon"
+                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     onClick={() => openStockDialog(p)}
                     title="Add Stock"
                   >
                     <Package className="w-4 h-4" />
                   </Button>
                   <Button
-                    variant="destructive"
+                    variant="ghost"
                     size="icon"
+                    className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
                     onClick={() => handleDelete(p.id)}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -296,32 +311,59 @@ export default function ProductsPage() {
 
       {/* Dialog Form */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="max-w-xl rounded-2xl shadow-smooth-lg border-0 bg-white">
+          <DialogHeader className="border-b border-slate-100 pb-4">
+            <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
+              {isEditing ? <Pencil className="w-5 h-5 text-blue-600" /> : <Plus className="w-5 h-5 text-emerald-600" />}
               {isEditing ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+          <div className="grid grid-cols-2 gap-6 pt-4">
+             {/* Left Column: Image Preview */}
+             <div className="col-span-2 md:col-span-2 space-y-4">
+               <div className="flex items-start gap-4">
+                  <div className="w-24 h-24 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center relative group">
+                    {formData.image_url ? (
+                      <img src={formData.image_url} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Package className="w-8 h-8 text-slate-300" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                     <Label>รูปภาพ URL</Label>
+                      <Input
+                        value={formData.image_url}
+                        onChange={(e) =>
+                          setFormData({ ...formData, image_url: e.target.value })
+                        }
+                        placeholder="https://..."
+                        className="font-mono text-xs bg-slate-50"
+                      />
+                      <p className="text-[10px] text-slate-400">วางลิงก์รูปภาพสินค้าที่นี่</p>
+                  </div>
+               </div>
+             </div>
+
+             {/* Form Fields - Compact Grid */}
+             <div className="space-y-2">
                 <Label>รหัสสินค้า (Code)</Label>
                 <Input
                   value={formData.code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, code: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                  className="font-mono bg-slate-50"
+                  placeholder="EX: A001"
                 />
-              </div>
-              <div>
-                <Label>หมวดหมู่</Label>
-                <Select
+             </div>
+
+             <div className="space-y-2">
+               <Label>หมวดหมู่</Label>
+               <Select
                   value={formData.category}
                   onValueChange={(v) =>
                     setFormData({ ...formData, category: v })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-slate-50">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -330,107 +372,111 @@ export default function ProductsPage() {
                     <SelectItem value="BAKERY">Bakery</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-            </div>
-            <div>
-              <Label>ชื่อสินค้า</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>ราคา (บาท)</Label>
-              <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>จำนวนสต็อก</Label>
-              <Input
-                type="number"
-                required
-                value={formData.stock}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock: Number(e.target.value) })
-                }
-              />
-            </div>
-            <div className="flex items-center justify-between border p-3 rounded-lg bg-slate-50">
-              <div className="space-y-0.5">
-                <Label className="text-base">สถานะสินค้า</Label>
-                <p className="text-xs text-slate-500">
-                  เปิด switch เพื่อให้สินค้าแสดงในหน้าขาย (POS)
-                </p>
-              </div>
-              <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_active: checked })
-                }
-              />
-            </div>
-            <div>
-              <Label>รูปภาพ URL</Label>
-              <Input
-                value={formData.image_url}
-                onChange={(e) =>
-                  setFormData({ ...formData, image_url: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
-            <Button className="w-full" onClick={handleSubmit}>
-              บันทึกข้อมูล
-            </Button>
+             </div>
+
+             <div className="col-span-2 md:col-span-2 space-y-2">
+               <Label>ชื่อสินค้า</Label>
+               <Input
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="ชื่อสินค้าภาษาไทย หรือ อังกฤษ"
+                  className="text-lg font-medium bg-slate-50"
+               />
+             </div>
+
+             <div className="space-y-2">
+               <Label>ราคา (บาท)</Label>
+               <div className="relative">
+                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">฿</span>
+                 <Input
+                    type="number"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    className="text-right font-bold pl-8 bg-slate-50"
+                 />
+               </div>
+             </div>
+
+             <div className="space-y-2">
+               <Label>สต็อกตั้งต้น</Label>
+               <Input
+                  type="number"
+                  value={formData.stock}
+                  onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
+                  className="text-right bg-slate-50"
+               />
+             </div>
+
+             <div className="col-span-2 flex items-center justify-between border border-slate-200 p-3 rounded-xl bg-slate-50/50 mt-2">
+               <div className="space-y-0.5">
+                  <Label className="text-sm font-semibold text-slate-700">สถานะการขาย</Label>
+                  <p className="text-xs text-slate-500">เปิด Switch เพื่อแสดงสินค้านี้ในหน้า POS</p>
+               </div>
+               <Switch
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+               />
+             </div>
           </div>
+          <DialogFooter className="pt-6 mt-2 border-t border-slate-100 flex gap-2">
+            <Button variant="ghost" onClick={() => setIsOpen(false)} className="hover:bg-slate-100">ยกเลิก</Button>
+            <Button onClick={handleSubmit} className="bg-slate-800 hover:bg-slate-900 min-w-[120px] shadow-lg hover:shadow-xl transition-all">
+              {isEditing ? "บันทึกแก้ไข" : "ยืนยันเพิ่มสินค้า"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       
       {/* Quick Stock Dialog */}
       <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-2xl shadow-smooth border-0 bg-white">
            <DialogHeader>
-             <DialogTitle>เพิ่ม/ลด สต็อกสินค้า</DialogTitle>
+             <DialogTitle className="text-center pb-4 border-b border-slate-100 text-slate-800">ปรับปรุงสต็อกสินค้า</DialogTitle>
            </DialogHeader>
-           <div className="space-y-4 py-4">
-             <div className="flex items-center justify-center gap-4">
-                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev - 1)}>
-                  <Minus className="w-4 h-4" />
-                </Button>
-                <div className="text-center w-20">
-                   <div className="text-3xl font-bold">{stockToAdd > 0 ? `+${stockToAdd}` : stockToAdd}</div>
-                   <p className="text-xs text-slate-500">Inventory change</p>
+           <div className="space-y-6 py-2">
+             <div className="flex flex-col items-center justify-center gap-4">
+                <div className="flex items-center gap-6">
+                  <Button variant="outline" size="icon" className="h-12 w-12 rounded-full border-slate-200 hover:bg-slate-50" onClick={() => setStockToAdd(prev => prev - 1)}>
+                    <Minus className="w-6 h-6 text-slate-600" />
+                  </Button>
+                  <div className="text-center w-24">
+                     <div className={`text-4xl font-bold ${stockToAdd > 0 ? "text-emerald-600" : stockToAdd < 0 ? "text-red-600" : "text-slate-800"}`}>
+                       {stockToAdd > 0 ? `+${stockToAdd}` : stockToAdd}
+                     </div>
+                     <p className="text-xs text-slate-400 font-medium uppercase tracking-wider mt-1">Change</p>
+                  </div>
+                  <Button variant="outline" size="icon" className="h-12 w-12 rounded-full border-slate-200 hover:bg-slate-50" onClick={() => setStockToAdd(prev => prev + 1)}>
+                    <Plus className="w-6 h-6 text-slate-600" />
+                  </Button>
                 </div>
-                <Button variant="outline" size="icon" onClick={() => setStockToAdd(prev => prev + 1)}>
-                  <Plus className="w-4 h-4" />
-                </Button>
              </div>
              
-             <div className="grid grid-cols-3 gap-2">
+             <div className="grid grid-cols-4 gap-2">
                 {[5, 10, 20, 50].map(num => (
-                  <Button key={num} variant="outline" size="sm" onClick={() => setStockToAdd(num)}>
+                  <Button key={num} variant="outline" size="sm" className="rounded-full text-xs font-medium hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200" onClick={() => setStockToAdd(num)}>
                     +{num}
                   </Button>
                 ))}
-                <Button variant="outline" size="sm" className="col-span-2" onClick={() => setStockToAdd(0)}>Reset</Button>
              </div>
 
-             <div className="bg-slate-50 p-3 rounded-lg text-center text-sm">
-                Current Stock: <span className="font-bold">{products.find(p => p.id === stockProductId)?.stock || 0}</span>
-                <span className="mx-2">→</span>
-                New Stock: <span className="font-bold text-blue-600">{(products.find(p => p.id === stockProductId)?.stock || 0) + stockToAdd}</span>
+             <div className="bg-slate-50 p-4 rounded-xl text-center text-sm border border-slate-100 flex items-center justify-between px-6 shadow-inner">
+                <div className="flex flex-col items-start">
+                   <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">Current</span>
+                   <span className="font-bold text-lg text-slate-700">{products.find(p => p.id === stockProductId)?.stock || 0}</span>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-slate-300 rotate-180" />
+                <div className="flex flex-col items-end">
+                   <span className="text-[10px] uppercase text-slate-400 font-bold tracking-wider">New</span>
+                   <span className="font-bold text-lg text-blue-600">{(products.find(p => p.id === stockProductId)?.stock || 0) + stockToAdd}</span>
+                </div>
              </div>
 
-             <Button className="w-full" onClick={handleStockUpdate}>
-                Confirm Update
-             </Button>
+             <div className="grid grid-cols-2 gap-3 pt-2">
+                <Button variant="ghost" onClick={() => setIsStockOpen(false)} className="hover:bg-slate-100">ยกเลิก</Button>
+                <Button onClick={handleStockUpdate} className="bg-slate-800 hover:bg-slate-900 shadow-md">
+                  ยืนยัน
+                </Button>
+             </div>
            </div>
         </DialogContent>
       </Dialog>

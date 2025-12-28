@@ -14,11 +14,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FeatureFlag } from "@/lib/features-server";
+import { StoreSettings, FeatureFlag } from "@/app/generated/prisma/client";
 import { useFeatures } from "@/lib/features";
+import { useStore } from "@/lib/store";
 
 interface DashboardSidebarProps {
   initialFeatures: FeatureFlag[];
+  initialSettings: StoreSettings | null;
 }
 
 const sidebarLinks = [
@@ -39,14 +41,16 @@ const sidebarLinks = [
   },
 ];
 
-export default function DashboardSidebar({ initialFeatures }: DashboardSidebarProps) {
+export default function DashboardSidebar({ initialFeatures, initialSettings }: DashboardSidebarProps) {
   const pathname = usePathname();
   
-  // ใช้ context สำหรับ real-time updates
-  const { features: contextFeatures, isLoading } = useFeatures();
+  // Feature Flags Context
+  const { features: contextFeatures, isLoading: isFeaturesLoading } = useFeatures();
+  const features = isFeaturesLoading ? initialFeatures : contextFeatures;
   
-  // ใช้ค่าจาก context ถ้าโหลดเสร็จแล้ว ไม่งั้นใช้ค่าจาก server
-  const features = isLoading ? initialFeatures : contextFeatures;
+  // Store Settings Context
+  const { settings: contextSettings, isLoading: isStoreLoading } = useStore();
+  const settings = isStoreLoading || !contextSettings ? initialSettings : contextSettings;
   
   const isEnabled = (featureId: string): boolean => {
     const feature = features.find(f => f.id === featureId);
@@ -58,12 +62,18 @@ export default function DashboardSidebar({ initialFeatures }: DashboardSidebarPr
   return (
     <aside className="w-16 lg:w-64 bg-white border-r border-slate-200/50 shadow-smooth flex flex-col shrink-0 transition-all duration-300">
       {/* Logo Area */}
-      <div className="h-16 flex items-center gap-3 px-3 lg:px-5 border-b border-slate-100 justify-center lg:justify-start">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shrink-0">
-          <Coffee className="w-5 h-5 text-white" />
+      <div className="h-18 flex items-center gap-3 px-3 lg:px-5 border-b border-slate-100 justify-center lg:justify-start">
+        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shrink-0 overflow-hidden relative">
+           {settings?.store_logo ? (
+              <img src={settings.store_logo} alt="Logo" className="w-full h-full object-cover" />
+           ) : (
+              <Coffee className="w-5 h-5 text-white" />
+           )}
         </div>
-        <div className="hidden lg:block">
-          <h1 className="font-bold text-slate-800 text-lg leading-none">Pocket Café</h1>
+        <div className="hidden lg:block truncate max-w-[150px]">
+          <h1 className="font-bold text-slate-800 text-lg leading-tight truncate" title={settings?.store_name || "Pocket Café"}>
+            {settings?.store_name || "Pocket Café"}
+          </h1>
           <span className="text-xs text-slate-500">Admin Dashboard</span>
         </div>
       </div>

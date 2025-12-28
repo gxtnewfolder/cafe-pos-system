@@ -22,6 +22,28 @@ export async function GET() {
     const totalSales = todayOrders.reduce((sum, order) => sum + Number(order.total_amount), 0);
     const totalOrders = todayOrders.length;
 
+    // 1.5 คำนวณยอดขายเมื่อวาน (Yesterday's Sales) เพื่อหา % Change
+    const yesterday = subDays(today, 1);
+    const startOfYesterday = startOfDay(yesterday);
+    const endOfYesterday = endOfDay(yesterday);
+
+    const yesterdayOrders = await prisma.order.findMany({
+      where: {
+        createdAt: { gte: startOfYesterday, lte: endOfYesterday },
+        status: "PAID"
+      }
+    });
+
+    const totalSalesYesterday = yesterdayOrders.reduce((sum, order) => sum + Number(order.total_amount), 0);
+    
+    // คำนวณ % Change
+    let salesChangePercentage = 0;
+    if (totalSalesYesterday === 0) {
+        salesChangePercentage = totalSales > 0 ? 100 : 0;
+    } else {
+        salesChangePercentage = ((totalSales - totalSalesYesterday) / totalSalesYesterday) * 100;
+    }
+
     // 2. สินค้าขายดี (Top Products) - คำนวณจาก Order วันนี้
     const productSales: Record<string, number> = {};
     todayOrders.forEach(order => {
@@ -33,7 +55,7 @@ export async function GET() {
     const topProducts = Object.entries(productSales)
         .map(([name, qty]) => ({ name, qty }))
         .sort((a, b) => b.qty - a.qty)
-        .slice(0, 5); // เอาแค่ 5 อันดับแรก
+        .slice(0, 3); // เอาแค่ 3 อันดับแรก
 
     // 3. กราฟยอดขายย้อนหลัง 7 วัน
     const salesChartData = [];
@@ -61,7 +83,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-        stats: { totalSales, totalOrders },
+        stats: { totalSales, totalOrders, salesChangePercentage },
         topProducts,
         salesChartData,
         lowStockItems

@@ -215,32 +215,40 @@ export default function MembersPage() {
 
   return (
     <div className="p-4 md:p-6 lg:p-8 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-slate-100 rounded-lg">
-            <Users className="w-6 h-6 text-slate-600" />
+      {/* Header with Gradient */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-gradient-to-r from-sky-100/50 to-blue-50/50 p-6 rounded-2xl border border-sky-100 shadow-sm relative overflow-hidden">
+        {/* Decorative background element */}
+        <div className="absolute right-0 top-0 -mt-4 -mr-4 w-24 h-24 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
+        
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="p-3 bg-white rounded-xl shadow-sm border border-sky-100">
+            <Users className="w-6 h-6 text-sky-600" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-800">Members</h1>
-            <p className="text-sm text-slate-500">จัดการข้อมูลสมาชิก ({customers.length} คน)</p>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-800">สมาชิก (Members)</h1>
+            <p className="text-sm text-slate-500 mt-1">จัดการข้อมูลสมาชิกและแต้มสะสมทั้งหมด ({customers.length} คน)</p>
           </div>
         </div>
 
-        <Button onClick={openAddDialog} className="bg-slate-800 hover:bg-slate-900">
+        <Button 
+          onClick={openAddDialog} 
+          className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white shadow-md border-0 relative z-10"
+        >
           <Plus className="w-4 h-4 mr-2" />
-          เพิ่มสมาชิก
+          เพิ่มสมาชิกใหม่
         </Button>
       </div>
 
-      {/* Search */}
+      {/* Search Bar - Floating Style */}
       <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <Search className="h-4 w-4 text-slate-400" />
+        </div>
         <Input
-          placeholder="ค้นหาด้วยชื่อหรือเบอร์โทร..."
+          placeholder="ค้นหาด้วยชื่อ หรือเบอร์โทรศัพท์..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          className="pl-10 bg-white"
+          className="pl-10 h-11 bg-white border-slate-200 focus:border-sky-300 focus:ring-sky-100 rounded-xl transition-all shadow-sm"
         />
       </div>
 
@@ -285,9 +293,9 @@ export default function MembersPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                        <Gift className="w-3 h-3 mr-1" />
-                        {customer.points}
+                      <Badge variant="secondary" className="bg-gradient-to-r from-amber-50 to-yellow-50 text-amber-700 border border-amber-200 shadow-sm px-3 py-1">
+                        <Gift className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+                        <span className="font-semibold">{customer.points.toLocaleString()}</span>
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">

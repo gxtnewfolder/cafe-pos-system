@@ -16,7 +16,8 @@ import {
   MapPin,
   FileText,
   ImagePlus,
-  X
+  X,
+  AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
 import { useFeatures } from "@/lib/features";
@@ -223,7 +224,7 @@ export default function SettingsPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Store Information */}
         <Card className="shadow-smooth border-0">
-          <CardHeader className="pb-4">
+          <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Store className="w-5 h-5 text-slate-600" />
               ข้อมูลร้าน
@@ -232,7 +233,7 @@ export default function SettingsPage() {
               ข้อมูลจะแสดงบนใบเสร็จและหน้าร้าน
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             {/* Store Name */}
             <div className="space-y-2">
               <Label htmlFor="store_name" className="flex items-center gap-2">
@@ -382,7 +383,7 @@ export default function SettingsPage() {
 
         {/* Feature Toggles */}
         <Card className="shadow-smooth border-0">
-          <CardHeader className="pb-4">
+          <CardHeader className="py-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5 text-slate-600" />
               Features
@@ -406,57 +407,63 @@ export default function SettingsPage() {
               return (
                 <div
                   key={feature.id}
-                  className={`p-4 rounded-xl border transition-all ${
+                  className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden group ${
                     feature.enabled 
-                      ? "bg-green-50/50 border-green-200" 
+                      ? "bg-gradient-to-br from-white to-emerald-50/30 border-emerald-200 shadow-sm hover:shadow-md ring-1 ring-emerald-100/50" 
                       : isDependencyMissing
-                        ? "bg-orange-50/50 border-orange-200"
-                        : "bg-slate-50 border-slate-100"
+                        ? "bg-orange-50/30 border-orange-200 opacity-90"
+                        : "bg-white border-slate-100 hover:border-slate-200 hover:bg-slate-50/50"
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-slate-800">
+                  
+                  <div className="flex items-start justify-between gap-3 pl-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className={`text-sm md:text-base font-semibold truncate ${feature.enabled ? 'text-emerald-900' : 'text-slate-700'}`}>
                           {feature.name}
                         </span>
+                        
                         {feature.is_addon && (
-                          <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
-                            Addon
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-gradient-to-r from-amber-100 to-yellow-100 text-amber-800 border-amber-200 shrink-0">
+                            PRO
                           </Badge>
                         )}
+                        
                         {requiresMembers && (
-                          <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
-                            ต้องเปิด "สมาชิก" ก่อน
+                          <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-blue-50 text-blue-700 border-blue-200 shrink-0">
+                            Member Req.
                           </Badge>
-                        )}
-                        {feature.enabled && (
-                          <Check className="w-4 h-4 text-green-600" />
                         )}
                       </div>
-                      <p className="text-sm text-slate-500 mt-1">
+                      
+                      <p className="text-xs md:text-sm text-slate-500 leading-snug">
                         {feature.description}
                       </p>
+                      
                       {isDependencyMissing && !feature.enabled && (
-                        <p className="text-xs text-orange-600 mt-2">
-                          ⚠️ ต้องเปิดใช้งาน "ระบบสมาชิก" ก่อนถึงจะเปิด feature นี้ได้
-                        </p>
+                        <div className="flex items-center gap-2 mt-2 text-[10px] md:text-xs font-medium text-orange-700 bg-orange-100/50 p-1.5 rounded-lg border border-orange-200/50">
+                          <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                          <span>ต้องเปิด "ระบบสมาชิก" ก่อน</span>
+                        </div>
                       )}
                     </div>
+                    
                     <Switch
                       checked={feature.enabled}
                       onCheckedChange={(checked) => handleToggleFeature(feature.id, checked)}
                       disabled={isDisabled}
+                      className={`scale-90 origin-right ${feature.enabled ? "data-[state=checked]:bg-emerald-600" : ""}`}
                     />
                   </div>
+                  
                   {feature.is_addon && !feature.enabled && (
                     <Button
                       variant="outline"
                       size="sm"
-                      className="mt-3 w-full text-amber-700 border-amber-300 hover:bg-amber-50"
+                      className="mt-3 w-full h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition-colors bg-white/50"
                     >
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      ซื้อ Addon นี้
+                      <Sparkles className="w-3 h-3 mr-1.5" />
+                      ปลดล็อก (Upgrade)
                     </Button>
                   )}
                 </div>

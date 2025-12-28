@@ -330,10 +330,10 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                   key={cat.id}
                   variant={isActive ? "default" : "ghost"}
                   size="sm"
-                  className={`gap-1 md:gap-2 transition-all duration-200 shrink-0 px-2 md:px-3 ${
+                  className={`gap-1 md:gap-2 transition-all duration-200 shrink-0 px-3 md:px-4 py-1.5 h-auto rounded-full font-medium border ${
                     isActive
-                      ? "bg-slate-800 text-white shadow-md"
-                      : "text-slate-600 hover:text-slate-800 hover:bg-slate-100"
+                      ? "bg-slate-800 text-white shadow-md border-slate-800 hover:bg-slate-900"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
@@ -356,8 +356,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           </div>
         </div>
 
-        <ScrollArea className="flex-1 p-2 md:p-4 lg:p-5 scrollbar-thin">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 md:gap-3 lg:gap-4 pb-20">
+        <ScrollArea className="flex-1 p-3 md:p-4 lg:p-6 scrollbar-thin bg-slate-50/50">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 md:gap-4 lg:gap-5 pb-24">
             {filteredProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                 <Search className="w-12 h-12 mb-4 opacity-50" />
@@ -375,11 +375,11 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                   onClick={() => {
                     if (!isOutOfStock) addToCart(product);
                   }}
-                  className={`transition-all duration-300 border-2 overflow-hidden hover-lift ${
+                  className={`group relative transition-all duration-500 border-2 overflow-hidden ${
                     isOutOfStock
-                      ? "opacity-50 grayscale cursor-not-allowed border-slate-100 bg-slate-50/50"
-                      : "cursor-pointer bg-white shadow-smooth hover:shadow-smooth-lg active:scale-[0.98] border-transparent"
-                  } ${inCart ? "border-slate-800 ring-2 ring-slate-800/10 shadow-smooth-lg" : ""}`}
+                      ? "border-transparent opacity-60 grayscale cursor-not-allowed bg-slate-100"
+                      : "cursor-pointer bg-white shadow-sm hover:shadow-xl hover:-translate-y-1 active:scale-[0.98] border-transparent"
+                  } ${inCart ? "!border-slate-800 shadow-md" : "hover:border-slate-200"}`}
                 >
                   <CardContent className="p-2 lg:p-3 flex flex-col gap-1.5 lg:gap-2">
                     {/* Image Area - 4:3 ratio instead of square */}
@@ -483,44 +483,55 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                   className="group p-2 lg:p-3 rounded-xl bg-slate-50/80 hover:bg-slate-100/80 transition-all duration-200 animate-in slide-in-from-right-5 fade-in"
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
-                  <div className="flex justify-between items-start gap-2 mb-1">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs lg:text-sm font-semibold text-slate-800 truncate">
-                        {item.product.name}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        ฿{item.product.price.toLocaleString()} × {item.quantity}
-                      </div>
-                    </div>
-                    <div className="font-bold text-slate-800 text-xs lg:text-sm whitespace-nowrap">
-                      ฿{(item.product.price * item.quantity).toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-0.5 bg-white rounded-lg p-0.5 shadow-sm border border-slate-100 w-fit ml-auto">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 rounded-md text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                      onClick={() => removeFromCart(item.product.id)}
-                    >
-                      {item.quantity === 1 ? (
-                        <Trash2 className="w-3 h-3" />
+                  <div className="flex gap-3">
+                    {/* Thumbnail */}
+                    <div className="w-12 h-12 rounded-lg bg-slate-100 shrink-0 overflow-hidden border border-slate-200/50">
+                      {item.product.image_url ? (
+                        <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />
                       ) : (
-                        <Minus className="w-3 h-3" />
+                         <div className="w-full h-full flex items-center justify-center text-slate-300"><Package className="w-5 h-5" /></div>
                       )}
-                    </Button>
-                    <span className="text-xs font-bold w-5 text-center text-slate-700">
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                      onClick={() => addToCart(item.product)}
-                      disabled={item.quantity >= item.product.stock}
-                    >
-                      <Plus className="w-3 h-3" />
-                    </Button>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="text-sm font-semibold text-slate-800 truncate leading-tight">
+                          {item.product.name}
+                        </div>
+                        <div className="font-bold text-slate-800 text-sm whitespace-nowrap">
+                          ฿{(item.product.price * item.quantity).toLocaleString()}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="text-xs text-slate-500 font-medium">
+                          ฿{item.product.price.toLocaleString()}
+                        </div>
+                        
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6 rounded-md border-red-100 text-red-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50"
+                            onClick={() => removeFromCart(item.product.id)}
+                          >
+                            {item.quantity === 1 ? <Trash2 className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                          </Button>
+                          <span className="text-sm font-bold w-6 text-center text-slate-800">
+                            {item.quantity}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-6 w-6 rounded-md border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-100"
+                            onClick={() => addToCart(item.product)}
+                            disabled={item.quantity >= item.product.stock}
+                          >
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

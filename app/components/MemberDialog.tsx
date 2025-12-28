@@ -109,7 +109,7 @@ export default function MemberDialog({ isOpen, onClose, onCustomerSelected }: Me
           </DialogTitle>
         </VisuallyHidden>
         {/* Header */}
-        <div className="bg-gradient-to-r from-sky-500 via-blue-500 to-sky-600 p-5 text-white">
+        <div className="bg-gradient-to-r from-sky-400 via-blue-400 to-blue-500 p-5 text-white">
           <div className="flex items-center justify-center gap-3 mb-2">
             {isRegisterMode ? (
               <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur flex items-center justify-center">
