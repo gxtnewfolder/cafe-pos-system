@@ -541,7 +541,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             </div>
             <Separator className="my-2 lg:my-3" />
             <div className="flex justify-between items-center">
-              <span className="font-bold text-slate-700 text-xs lg:text-sm">Total</span>
+              <span className="font-bold text-slate-700 text-xs lg:text-lg">Total</span>
               <div className="text-right">
                 <span className="text-lg lg:text-xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
