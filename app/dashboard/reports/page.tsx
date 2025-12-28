@@ -133,8 +133,13 @@ export default function ReportsPage() {
 
   const handleExportExcel = () => {
     if (!data) return;
-    downloadExcel(data.orders, data.summary, data.topProducts);
-    toast.success("Export Excel สำเร็จ!");
+    try {
+      downloadExcel(data.orders, data.summary, data.topProducts);
+      toast.success("Export Excel สำเร็จ!");
+    } catch (error) {
+      console.error("Excel export error:", error);
+      toast.error("เกิดข้อผิดพลาดในการสร้าง Excel");
+    }
   };
 
   const handleExportPDF = () => {
@@ -285,7 +290,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Cards - Compact */}
-      <div className="grid grid-cols-4 gap-2 shrink-0">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 shrink-0">
         {/* Total Sales */}
         <Card className="shadow-sm hover:shadow-md transition-shadow border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30">
           <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
@@ -548,12 +553,14 @@ export default function ReportsPage() {
               {data.orders.length > 8 && (
                 <div className="p-3 text-center text-xs text-slate-500 border-t bg-slate-50">
                   แสดง 8 จาก {data.orders.length} รายการ -{" "}
-                  <span 
-                    className="text-blue-600 cursor-pointer hover:underline font-medium"
+                  <button 
+                    type="button"
+                    className="text-blue-600 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                     onClick={handleExportExcel}
+                    aria-label="Export all orders to Excel"
                   >
                     Export Excel เพื่อดูทั้งหมด
-                  </span>
+                  </button>
                 </div>
               )}
             </div>
