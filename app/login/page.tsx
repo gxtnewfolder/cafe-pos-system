@@ -41,21 +41,29 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center">
-               <Coffee className="h-8 w-8 text-primary" />
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 relative overflow-hidden">
+      {/* Subtle Background Pattern */}
+      <div className="absolute inset-0 bg-slate-50 [mask-image:linear-gradient(to_bottom,white,transparent)]">
+        <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_10%,transparent_100%)]"></div>
+      </div>
+
+      <Card className="w-full max-w-sm shadow-xl border-slate-100 bg-white relative z-10">
+        <CardHeader className="space-y-1 text-center pt-8 pb-6">
+          <div className="flex justify-center mb-6">
+             <div className="h-16 w-16 bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3">
+                <Coffee className="h-8 w-8 text-white" />
+             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">Pocket Café POS</CardTitle>
-          <CardDescription>
-            เข้าสู่ระบบเพื่อเริ่มการขาย
+          <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
+            Pocket Café
+          </CardTitle>
+          <CardDescription className="text-slate-500">
+            ลงชื่อเข้าใช้ระบบ
           </CardDescription>
         </CardHeader>
+
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-8">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input 
@@ -64,6 +72,7 @@ export default function LoginPage() {
                 value={formData.username}
                 onChange={(e) => setFormData({...formData, username: e.target.value})}
                 required
+                className="h-11 bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-200 transition-all"
               />
             </div>
             <div className="space-y-2">
@@ -75,16 +84,25 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
+                className="h-11 bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-200 transition-all"
               />
             </div>
           </CardContent>
-          <CardFooter>
-            <Button className="w-full h-11 text-lg" type="submit" disabled={loading}>
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "เข้าสู่ระบบ"}
+          <CardFooter className="px-8 pb-8 pt-2">
+            <Button 
+              className="w-full h-11 text-base font-medium bg-slate-900 hover:bg-slate-800 text-white shadow-md transition-all rounded-lg" 
+              type="submit" 
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : "เข้าสู่ระบบ"}
             </Button>
           </CardFooter>
         </form>
       </Card>
+      
+      <p className="absolute bottom-6 text-slate-400 text-xs text-center font-medium">
+        © 2024 Pocket Café POS System
+      </p>
     </div>
   );
 }
