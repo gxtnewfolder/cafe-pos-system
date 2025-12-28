@@ -11,6 +11,7 @@ import {
   Users,
   Settings,
   ChevronRight,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,6 +39,12 @@ const sidebarLinks = [
     title: "ประวัติการขาย",
     href: "/dashboard/orders",
     icon: Receipt,
+  },
+  {
+    title: "รายงานยอดขาย",
+    href: "/dashboard/reports",
+    icon: BarChart3,
+    featureFlag: "reports",
   },
 ];
 
@@ -85,6 +92,12 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
             เมนูหลัก
           </p>
           {sidebarLinks.map((link) => {
+            // Check if link requires a feature flag
+            if (link.featureFlag) {
+              const flag = features.find((f) => f.id === link.featureFlag);
+              if (!flag?.enabled) return null;
+            }
+
             const isActive = pathname === link.href;
             return (
               <Link key={link.href} href={link.href}>
