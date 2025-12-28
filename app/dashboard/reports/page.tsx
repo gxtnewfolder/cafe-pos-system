@@ -85,29 +85,51 @@ export default function ReportsPage() {
   });
   
   const [data, setData] = useState<ReportData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Initial skeleton
+  const [isFetching, setIsFetching] = useState(false); // Subtle refetch indicator
 
   useEffect(() => {
-    fetchReport();
-  }, [period, startDate, endDate]);
+    const controller = new AbortController();
+    const signal = controller.signal;
 
-  const fetchReport = async () => {
-    setIsLoading(true);
-    try {
-      let url = `/api/reports/sales?period=${period}`;
-      if (startDate && endDate) {
-        url += `&startDate=${startDate}&endDate=${endDate}`;
+    const fetchReport = async () => {
+      // Only show full skeleton on initial load (when data is null)
+      if (!data) {
+        setIsLoading(true);
+      } else {
+        setIsFetching(true);
       }
-      const res = await fetch(url);
-      const json = await res.json();
-      setData(json);
-    } catch (error) {
-      console.error("Failed to fetch report:", error);
-      toast.error("โหลดรายงานไม่สำเร็จ");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      try {
+        let url = `/api/reports/sales?period=${period}`;
+        if (startDate && endDate) {
+          url += `&startDate=${startDate}&endDate=${endDate}`;
+        }
+        const res = await fetch(url, { signal });
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        const json = await res.json();
+        if (!signal.aborted) {
+          setData(json);
+        }
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error("Failed to fetch report:", error);
+          toast.error("โหลดรายงานไม่สำเร็จ");
+        }
+      } finally {
+        if (!signal.aborted) {
+          setIsLoading(false);
+          setIsFetching(false);
+        }
+      }
+    };
+    fetchReport();
+
+    return () => {
+      controller.abort();
+    };
+  }, [period, startDate, endDate]);
 
   const handleExportExcel = () => {
     if (!data) return;
@@ -123,12 +145,6 @@ export default function ReportsPage() {
     } catch (error) {
       console.error("PDF export error:", error);
       toast.error("เกิดข้อผิดพลาดในการสร้าง PDF");
-    }
-  };
-
-  const handleCustomDateSearch = () => {
-    if (startDate && endDate) {
-      fetchReport();
     }
   };
 
@@ -170,7 +186,14 @@ export default function ReportsPage() {
   if (!data) return null;
 
   return (
-    <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4 overflow-auto">
+    <div className={`h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4 overflow-auto transition-opacity ${isFetching ? 'opacity-60' : ''}`}>
+      {/* Loading indicator */}
+      {isFetching && (
+        <div className="fixed top-4 right-4 z-50 bg-blue-500 text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-2 shadow-lg">
+          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          กำลังโหลด...
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 shrink-0">
         <div>
@@ -258,9 +281,6 @@ export default function ReportsPage() {
             onChange={(e) => setEndDate(e.target.value)}
             className="w-32 text-sm h-8"
           />
-          <Button size="sm" onClick={handleCustomDateSearch} className="h-8">
-            ค้นหา
-          </Button>
         </div>
       </div>
 

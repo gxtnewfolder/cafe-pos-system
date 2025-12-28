@@ -197,7 +197,18 @@ export function generateSalesPDF(data: ReportData): void {
     // Check for page break
     if (y > 265) {
       doc.addPage();
-      y = 20;
+      y = margin;
+      doc.setFillColor(colors.slate800.r, colors.slate800.g, colors.slate800.b);
+      doc.roundedRect(margin, y - 5, tableWidth, 10, 2, 2, "F");
+      doc.setFontSize(8);
+      doc.setTextColor(colors.white.r, colors.white.g, colors.white.b);
+      doc.text("Order ID", margin + 5, y + 1);
+      doc.text("Date", margin + 35, y + 1);
+      doc.text("Customer", margin + 65, y + 1);
+      doc.text("Items", margin + 100, y + 1);
+      doc.text("Total", margin + 140, y + 1);
+      doc.text("Payment", margin + 165, y + 1);
+      y += 10;
     }
   }
 

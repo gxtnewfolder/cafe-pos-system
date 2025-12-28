@@ -11,30 +11,29 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
 
     // Calculate date range based on period
-    const now = new Date();
     let dateFrom: Date;
-    let dateTo: Date = new Date(now.setHours(23, 59, 59, 999));
+    let dateTo: Date = new Date();
+    dateTo.setHours(23, 59, 59, 999);
 
     if (startDate && endDate) {
       dateFrom = new Date(startDate);
+      dateFrom.setHours(0, 0, 0, 0);
       dateTo = new Date(endDate);
       dateTo.setHours(23, 59, 59, 999);
     } else {
+      dateFrom = new Date();
       switch (period) {
         case "weekly":
-          dateFrom = new Date(now);
           dateFrom.setDate(dateFrom.getDate() - 7);
           break;
         case "monthly":
-          dateFrom = new Date(now);
           dateFrom.setMonth(dateFrom.getMonth() - 1);
           break;
         case "daily":
         default:
-          dateFrom = new Date(now);
-          dateFrom.setHours(0, 0, 0, 0);
           break;
       }
+      dateFrom.setHours(0, 0, 0, 0);
     }
 
     // Fetch orders within date range
