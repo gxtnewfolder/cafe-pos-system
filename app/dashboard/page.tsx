@@ -28,6 +28,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 
 // Type Definition
 interface DashboardData {
@@ -45,6 +46,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { t } = useTranslation();
 
   const loadData = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
@@ -137,10 +139,10 @@ export default function DashboardPage() {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-8 h-8 text-red-500" />
           </div>
-          <h3 className="text-lg font-bold text-slate-800 mb-2">ไม่สามารถโหลดข้อมูลได้</h3>
-          <p className="text-slate-500">กรุณาเช็ค Console หรือลองอีกครั้ง</p>
+          <h3 className="text-lg font-bold text-slate-800 mb-2">{t("dashboard.loadError")}</h3>
+          <p className="text-slate-500">{t("dashboard.checkConsole")}</p>
           <Button onClick={() => loadData(true)} className="mt-4 bg-slate-800 text-white">
-            ลองอีกครั้ง
+            {t("retry")}
           </Button>
         </div>
       </div>
@@ -157,10 +159,10 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-            ภาพรวม
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+            {t("dashboard.overview")}
           </h2>
-          <p className="text-slate-500 mt-1">สรุปยอดขายและสินค้าวันนี้</p>
+          <p className="text-slate-500 mt-1">{t("dashboard.summaryToday")}</p>
         </div>
         <Button
           variant="outline"
@@ -170,7 +172,7 @@ export default function DashboardPage() {
           disabled={isRefreshing}
         >
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
-          {isRefreshing ? "กำลังอัปเดต..." : "รีเฟรชข้อมูล"}
+          {isRefreshing ? t("updating") : t("refresh")}
         </Button>
       </div>
 
@@ -179,7 +181,7 @@ export default function DashboardPage() {
         {/* Total Sales */}
         <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-emerald-900/70">ยอดขายวันนี้</CardTitle>
+            <CardTitle className="text-sm font-semibold text-emerald-900/70">{t("dashboard.todaySales")}</CardTitle>
             <div className="p-2 rounded-lg bg-emerald-100/50 text-emerald-700">
               <DollarSign className="h-4 w-4" />
             </div>
@@ -190,7 +192,7 @@ export default function DashboardPage() {
             </div>
             <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${isPositive ? "text-emerald-600" : "text-red-600"}`}>
                {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingUp className="h-3 w-3 rotate-180" />}
-               <span>{percentageDisplay} จากเมื่อวาน</span>
+               <span>{percentageDisplay} {t("dashboard.comparedToYesterday")}</span>
             </div>
           </CardContent>
         </Card>
@@ -198,21 +200,21 @@ export default function DashboardPage() {
         {/* Total Orders */}
         <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-blue-100 bg-gradient-to-br from-white to-blue-50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-blue-900/70">จำนวนออเดอร์</CardTitle>
+            <CardTitle className="text-sm font-semibold text-blue-900/70">{t("dashboard.totalOrders")}</CardTitle>
             <div className="p-2 rounded-lg bg-blue-100/50 text-blue-700">
               <ShoppingBag className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-700">{data.stats.totalOrders}</div>
-            <p className="text-xs text-blue-500 mt-1">บิลที่ชำระเงินแล้ววันนี้</p>
+            <p className="text-xs text-blue-500 mt-1">{t("dashboard.paidOrdersToday")}</p>
           </CardContent>
         </Card>
 
         {/* Average Order Value */}
         <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-violet-100 bg-gradient-to-br from-white to-violet-50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-violet-900/70">ยอดเฉลี่ย/บิล</CardTitle>
+            <CardTitle className="text-sm font-semibold text-violet-900/70">{t("dashboard.avgOrderValue")}</CardTitle>
             <div className="p-2 rounded-lg bg-violet-100/50 text-violet-700">
               <Target className="h-4 w-4" />
             </div>
@@ -221,7 +223,7 @@ export default function DashboardPage() {
             <div className="text-2xl font-bold text-violet-700">
               ฿{data.stats.totalOrders > 0 ? Math.round(data.stats.totalSales / data.stats.totalOrders).toLocaleString() : 0}
             </div>
-            <p className="text-xs text-violet-500 mt-1">ราคาเฉลี่ยต่อออเดอร์</p>
+            <p className="text-xs text-violet-500 mt-1">{t("dashboard.avgPerOrder")}</p>
           </CardContent>
         </Card>
 
@@ -235,7 +237,7 @@ export default function DashboardPage() {
         >
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className={`text-sm font-semibold ${data.lowStockItems.length > 0 ? 'text-red-800' : 'text-slate-600'}`}>
-              สินค้าใกล้หมด
+              {t("dashboard.lowStockAlert")}
             </CardTitle>
             <div className={`p-2 rounded-lg ${
                 data.lowStockItems.length > 0 ? 'bg-red-100/50 text-red-600' : 'bg-slate-100 text-slate-500'
@@ -248,7 +250,7 @@ export default function DashboardPage() {
               {data.lowStockItems.length}
             </div>
              <p className={`text-xs mt-1 ${data.lowStockItems.length > 0 ? 'text-red-600 font-medium' : 'text-slate-500'}`}>
-              {data.lowStockItems.length > 0 ? 'รายการที่ต้องเติมสต็อก' : 'สถานะปกติ'}
+              {data.lowStockItems.length > 0 ? t("dashboard.needRestock") : t("dashboard.normalStatus")}
             </p>
           </CardContent>
         </Card>
@@ -260,7 +262,7 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-slate-800 flex items-center gap-2 text-base">
               <div className="w-1 h-5 bg-blue-500 rounded-full"></div>
-              ภาพรวมรายได้ (7 วันล่าสุด)
+              {t("dashboard.revenueChart")}
             </CardTitle>
           </CardHeader>
           <CardContent className="pl-0">
@@ -299,7 +301,7 @@ export default function DashboardPage() {
                             <p className="font-semibold text-slate-700 mb-1">{label}</p>
                             <div className="flex items-center gap-2">
                               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                              <span className="text-slate-500">ยอดขาย:</span>
+                              <span className="text-slate-500">{t("dashboard.sales")}:</span>
                               <span className="font-bold text-blue-600">
                                 ฿{Number(payload[0].value).toLocaleString()}
                               </span>
@@ -328,9 +330,9 @@ export default function DashboardPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-slate-800 flex items-center gap-2 text-base">
                <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
-               สินค้าขายดี & ต้องเติม
+               {t("dashboard.topProductsAndRestock")}
             </CardTitle>
-            <CardDescription className="text-xs">สรุปรายการสำคัญวันนี้</CardDescription>
+            <CardDescription className="text-xs">{t("dashboard.importantItemsToday")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
@@ -340,11 +342,11 @@ export default function DashboardPage() {
                   <div className="w-6 h-6 rounded-md bg-white shadow-sm flex items-center justify-center">
                     <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
                   </div>
-                  Top 3 ขายดีวันนี้
+                  {t("dashboard.top3Today")}
                 </h4>
                 <div className="space-y-3">
                   {data.topProducts.length === 0 && (
-                    <p className="text-sm text-slate-400 text-center py-4">ยังไม่มีรายการขาย</p>
+                    <p className="text-sm text-slate-400 text-center py-4">{t("dashboard.noSalesYet")}</p>
                   )}
                   {data.topProducts.map((p, i) => {
                      // Colors for Ranking
@@ -365,7 +367,7 @@ export default function DashboardPage() {
                           </span>
                           <span className="text-slate-700 font-medium">{p.name}</span>
                         </div>
-                        <span className="font-bold text-slate-800 bg-slate-50 px-2 py-1 rounded-md text-xs">{p.qty} แก้ว</span>
+                        <span className="font-bold text-slate-800 bg-slate-50 px-2 py-1 rounded-md text-xs">{p.qty} {t("dashboard.cups")}</span>
                       </div>
                     );
                   })}
@@ -380,7 +382,7 @@ export default function DashboardPage() {
                   <div className="w-6 h-6 rounded-md bg-white shadow-sm flex items-center justify-center">
                     <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
                   </div>
-                  สต็อกวิกฤต (&lt;10)
+                  {t("dashboard.criticalStock")}
                 </h4>
                 <div className="space-y-2">
                   {data.lowStockItems.length === 0 && (
@@ -388,7 +390,7 @@ export default function DashboardPage() {
                       <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center mb-1">
                         <Check className="w-5 h-5 text-emerald-600" />
                       </div>
-                      <span className="font-semibold">สต็อกปลอดภัยทุกรายการ</span>
+                      <span className="font-semibold">{t("dashboard.allStockSafe")}</span>
                     </div>
                   )}
                   {data.lowStockItems.map((p) => (
@@ -398,7 +400,7 @@ export default function DashboardPage() {
                     >
                       <span className="text-slate-700 font-medium group-hover:text-red-600 transition-colors">{p.name}</span>
                       <span className="font-bold text-red-600 bg-red-50 px-2 py-1 rounded-lg text-xs border border-red-100">
-                        เหลือ {p.stock}
+                        {t("dashboard.remaining")} {p.stock}
                       </span>
                     </div>
                   ))}

@@ -20,6 +20,8 @@ import {
   Wine,
   Grid3X3,
   ShoppingBasket,
+  Globe,
+  Check,
 } from "lucide-react";
 import { Customer } from "@/app/generated/prisma/client";
 import { toast } from "sonner";
@@ -28,6 +30,14 @@ import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useFeatures } from "@/lib/features";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "react-i18next";
+
+import { setStoredLanguage } from "@/lib/tolgee";
+
+const changeLanguage = (i18n: any, lang: string) => {
+  i18n.changeLanguage(lang);
+  setStoredLanguage(lang);
+};
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -36,13 +46,22 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FlagIcon } from "@/components/FlagIcons";
 
-// Category options for filter
+// Category options for filter - labels will be translated in component
 const CATEGORIES = [
-  { id: "ALL", label: "ทั้งหมด", icon: Grid3X3 },
-  { id: "COFFEE", label: "Coffee", icon: Coffee },
-  { id: "NON_COFFEE", label: "Non-Coffee", icon: Wine },
-  { id: "BAKERY", label: "Bakery", icon: Cake },
+  { id: "ALL", labelKey: "pos.allCategories", icon: Grid3X3 },
+  { id: "COFFEE", labelKey: "pos.categories.coffee", icon: Coffee },
+  { id: "NON_COFFEE", labelKey: "pos.categories.nonCoffee", icon: Wine },
+  { id: "BAKERY", labelKey: "pos.categories.bakery", icon: Cake },
 ];
 
 type ProductWithNumber = Omit<Product, "price"> & {
@@ -84,6 +103,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
   const router = useRouter();
   const { isEnabled } = useFeatures();
   const { settings: storeSettings } = useStore();
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -109,8 +129,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
       const existingItem = prev.find((item) => item.product.id === product.id);
 
       if (existingItem && existingItem.quantity >= product.stock) {
-        toast.error("สินค้าหมดสต็อก", {
-          description: `มีสินค้าเพียง ${product.stock} ชิ้น`,
+        toast.error(t("pos.outOfStock"), {
+          description: t("pos.stockLimit", { count: product.stock }),
         });
         return prev;
       }
@@ -198,9 +218,9 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
       setSelectedCustomer(null);
       // refreshProducts();
 
-      toast.success("บันทึกออเดอร์สำเร็จ!");
+      toast.success(t("pos.orderSuccess"));
     } catch (error: any) {
-      toast.error("ทำรายการไม่สำเร็จ", { description: error.message });
+      toast.error(t("pos.orderFailed"), { description: error.message });
     } finally {
       setIsProcessing(false);
     }
@@ -220,7 +240,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           </div>
           <Loader2 className="w-16 h-16 animate-spin text-slate-600 relative z-10" />
         </div>
-        <span className="mt-4 text-slate-500 font-medium">กำลังโหลดระบบ...</span>
+        <span className="mt-4 text-slate-500 font-medium">{t("loading")}</span>
       </div>
     );
   }
@@ -251,7 +271,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
               className="text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 transition-all duration-200 px-2 md:px-3"
             >
               <LayoutDashboard className="w-4 h-4 md:mr-2" />
-              <span className="hidden md:inline">หลังบ้าน</span>
+              <span className="hidden md:inline">{t("pos.dashboard")}</span>
             </Button>
           </Link>
 
@@ -294,31 +314,83 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                     className="gap-1.5 h-8 text-xs bg-gradient-to-r from-sky-50 to-blue-50 border-sky-200 text-sky-700 hover:border-sky-300 hover:bg-sky-100 transition-all"
                     onClick={() => setIsMemberOpen(true)}
                   >
-                    <User className="w-3.5 h-3.5" /> สมาชิก
+                    <User className="w-3.5 h-3.5" /> {t("pos.member")}
                   </Button>
                 )}
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-3 border-l border-slate-200/50 pl-4 ml-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold">
-                {session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-              <span className="text-sm text-slate-600 font-medium hidden lg:inline">
-                {session?.user?.name}
-              </span>
+          <div className="flex items-center gap-2 border-l border-slate-200/50 pl-4 ml-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-2 hover:bg-slate-100 px-2"
+                >
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center text-white text-xs font-bold">
+                    {session?.user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                  <div className="hidden lg:flex flex-col items-start">
+                    <span className="text-sm text-slate-600 font-medium">
+                      {session?.user?.name}
+                    </span>
+                    <FlagIcon language={i18n.language} className="w-4 h-4 rounded-sm" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{session?.user?.name || 'User'}</p>
+                    <p className="text-xs text-slate-500">{session?.user?.email || ''}</p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs text-slate-400 uppercase">
+                  {t("language.title")}
+                </DropdownMenuLabel>
+                <DropdownMenuItem 
+                  onClick={() => changeLanguage(i18n, 'th')}
+                  className="cursor-pointer"
+                >
+                  <FlagIcon language="th" className="w-5 h-5 rounded-sm mr-2" />
+                  {t("language.thai")}
+                  {i18n.language === 'th' && <Check className="w-4 h-4 ml-auto text-emerald-500" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => changeLanguage(i18n, 'en')}
+                  className="cursor-pointer"
+                >
+                  <FlagIcon language="en" className="w-5 h-5 rounded-sm mr-2" />
+                  {t("language.english")}
+                  {i18n.language === 'en' && <Check className="w-4 h-4 ml-auto text-emerald-500" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => signOut()}
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  {t("auth.logout")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-slate-400 hover:text-red-600 hover:bg-red-50"
+                onClick={() => signOut()}
+                title={t("auth.logout")}
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-400 hover:text-red-500 hover:bg-red-50/50 transition-all duration-200"
-              onClick={() => signOut()}
-            >
-              <LogOut className="w-4 h-4" />
-            </Button>
           </div>
+          
+          
         </header>
 
         {/* Filter Bar */}
@@ -341,7 +413,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{cat.label}</span>
+                  <span className="hidden sm:inline">{t(cat.labelKey)}</span>
                 </Button>
               );
             })}
@@ -351,7 +423,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
           <div className="relative w-28 sm:w-36 md:w-44 lg:w-52 shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="ค้นหา..."
+              placeholder={t("pos.searchProduct")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
@@ -364,8 +436,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             {filteredProducts.length === 0 ? (
               <div className="col-span-full flex flex-col items-center justify-center py-20 text-slate-400">
                 <Search className="w-12 h-12 mb-4 opacity-50" />
-                <p className="text-lg font-medium">ไม่พบสินค้า</p>
-                <p className="text-sm">ลองเปลี่ยนหมวดหรือคำค้นหา</p>
+                <p className="text-lg font-medium">{t("pos.noProduct")}</p>
+                <p className="text-sm">{t("pos.tryOtherSearch")}</p>
               </div>
             ) : (
               filteredProducts.map((product) => {
@@ -396,7 +468,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                       ) : (
                         <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 gap-1">
                           <Package className="w-6 h-6" />
-                          <span className="text-[10px] font-medium">No Image</span>
+                          <span className="text-[10px] font-medium">{t("pos.noImage")}</span>
                         </div>
                       )}
 
@@ -412,7 +484,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                             variant="destructive"
                             className="shadow-lg font-bold px-2 py-0.5 text-xs"
                           >
-                            Sold Out
+                            {t("pos.soldOut")}
                           </Badge>
                         </div>
                       )}
@@ -459,8 +531,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             <div className="w-6 h-6 lg:w-8 lg:h-8 rounded-lg bg-slate-800 flex items-center justify-center shrink-0">
               <ShoppingCart className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
             </div>
-            <span className="hidden xl:inline">รายการสั่งซื้อ</span>
-            <span className="xl:hidden">Order</span>
+            <span className="hidden xl:inline">{t("pos.orderList")}</span>
+            <span className="xl:hidden">{t("pos.cart")}</span>
           </h2>
           <Badge variant="secondary" className="text-slate-700 bg-slate-100 font-semibold px-2 lg:px-3 text-xs">
             {cart.reduce((a, b) => a + b.quantity, 0)}
@@ -474,8 +546,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                 <ShoppingBasket className="w-10 h-10 text-slate-300" strokeWidth={1.5} />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-slate-400">ยังไม่มีสินค้า</p>
-                <p className="text-xs text-slate-300 mt-1">แตะสินค้าเพื่อเพิ่มลงตะกร้า</p>
+                <p className="text-sm font-medium text-slate-400">{t("pos.emptyCart")}</p>
+                <p className="text-xs text-slate-300 mt-1">{t("pos.addProductHint")}</p>
               </div>
             </div>
           ) : (
@@ -546,16 +618,16 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
         <div className="p-2 lg:p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-3 lg:space-y-4 shrink-0">
           <div className="space-y-1.5 lg:space-y-2 bg-white rounded-xl p-2 lg:p-4 shadow-sm border border-slate-100">
             <div className="flex justify-between text-slate-500 text-xs lg:text-sm">
-              <span>Subtotal</span>
+              <span>{t("subtotal")}</span>
               <span className="font-medium">฿{totalAmount.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-slate-400 text-xs lg:text-sm">
-              <span>Tax (7%)</span>
+              <span>{t("tax")}</span>
               <span>-</span>
             </div>
             <Separator className="my-2 lg:my-3" />
             <div className="flex justify-between items-center">
-              <span className="font-bold text-slate-700 text-xs lg:text-lg">Total</span>
+              <span className="font-bold text-slate-700 text-xs lg:text-lg">{t("total")}</span>
               <div className="text-right">
                 <span className="text-lg lg:text-xl font-bold text-slate-800">
                   ฿{totalAmount.toLocaleString()}
@@ -573,7 +645,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             disabled={cart.length === 0}
             onClick={() => setIsPaymentOpen(true)}
           >
-            {cart.length === 0 ? "Empty" : "Charge →"}
+            {cart.length === 0 ? t("pos.empty") : t("pos.charge")}
           </Button>
         </div>
       </div>

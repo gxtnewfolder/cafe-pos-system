@@ -41,6 +41,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Product } from "@/app/generated/prisma/client";
+import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -69,6 +70,7 @@ const formatCategory = (cat: string) => {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -234,11 +236,11 @@ export default function ProductsPage() {
     <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-4 shrink-0">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
-          <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">{t("products.title")}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t("products.subtitle")}</p>
         </div>
         <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
-          <Plus className="w-4 h-4" /> เพิ่มสินค้า
+          <Plus className="w-4 h-4" /> {t("products.addProduct")}
         </Button>
       </div>
 
@@ -247,14 +249,14 @@ export default function ProductsPage() {
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-100">
             <TableRow className="hover:bg-slate-50/50">
-              <TableHead className="w-[80px] font-semibold text-slate-700">Image</TableHead>
-              <TableHead className="font-semibold text-slate-700">Code</TableHead>
-              <TableHead className="font-semibold text-slate-700">Name</TableHead>
-              <TableHead className="font-semibold text-slate-700">Category</TableHead>
-              <TableHead className="font-semibold text-slate-700">Price</TableHead>
-              <TableHead className="font-semibold text-slate-700">Stock</TableHead>
-              <TableHead className="font-semibold text-slate-700">Status</TableHead>
-              <TableHead className="text-right font-semibold text-slate-700 pr-6">Actions</TableHead>
+              <TableHead className="w-[80px] font-semibold text-slate-700">{t("image")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("products.code")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("name")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("category")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("price")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("stock")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("status")}</TableHead>
+              <TableHead className="text-right font-semibold text-slate-700 pr-6">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

@@ -84,6 +84,53 @@
 
 ---
 
+### 🌐 Internationalization (i18n)
+ระบบรองรับ 2 ภาษา: **ไทย** 🇹🇭 และ **English** 🇬🇧
+
+| Feature | คำอธิบาย |
+|---------|----------|
+| **Language Switcher** | เปลี่ยนภาษาได้ทันทีจาก Sidebar |
+| **Tolgee Integration** | ระบบจัดการคำแปลผ่าน Tolgee Cloud |
+| **Date Localization** | วันที่แสดงตามภาษาที่เลือก |
+| **All Pages Translated** | POS, Dashboard, Orders, Products, Members, Reports, Settings |
+
+#### Translation Files:
+- `messages/th.json` - ภาษาไทย (100+ keys)
+- `messages/en.json` - English (100+ keys)
+
+#### การตั้งค่า Tolgee Cloud (Optional):
+1. สร้าง Project ที่ [Tolgee.io](https://app.tolgee.io)
+2. สร้าง API Key พร้อม scopes: `keys.view`, `translations.view`, `translations.edit`
+3. เพิ่มใน `.env.local`:
+```env
+NEXT_PUBLIC_TOLGEE_API_URL=https://app.tolgee.io
+NEXT_PUBLIC_TOLGEE_API_KEY=your-api-key
+```
+4. รีสตาร์ท Development Server
+5. กด **Alt+Click** บนข้อความเพื่อแก้ไขคำแปลได้ทันที!
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
+| **Database** | [PostgreSQL](https://www.postgresql.org/) |
+| **ORM** | [Prisma 7](https://www.prisma.io/) |
+| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
+| **UI Components** | [Shadcn UI](https://ui.shadcn.com/) |
+| **Auth** | [NextAuth.js](https://next-auth.js.org/) |
+| **i18n** | [Tolgee](https://tolgee.io/) + react-i18next |
+| **Charts** | [Recharts](https://recharts.org/) |
+| **Icons** | [Lucide React](https://lucide.dev/) |
+| **QR Code** | promptpay-qr, qrcode.react |
+| **PDF** | jsPDF |
+| **Excel** | xlsx |
+| **Toast** | Sonner |
+
+---
+
 ### 📱 PWA Support (Progressive Web App)
 ระบบรองรับการติดตั้งเป็น PWA เพื่อใช้งานบน iPad และ Mobile ได้สะดวก
 
@@ -99,23 +146,6 @@
 - ✅ **Offline Support**: ใช้งานได้แม้ไม่มี Internet (บางส่วน)
 - ✅ **App Icon**: ไอคอนสวยบน Home Screen
 - ✅ **Fast Loading**: Cache ข้อมูลเพื่อโหลดเร็วขึ้น
-
-## 🛠️ Tech Stack
-
-| Category | Technology |
-|----------|------------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) |
-| **Database** | [PostgreSQL](https://www.postgresql.org/) |
-| **ORM** | [Prisma 7](https://www.prisma.io/) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
-| **UI Components** | [Shadcn UI](https://ui.shadcn.com/) |
-| **Auth** | [NextAuth.js](https://next-auth.js.org/) |
-| **Charts** | [Recharts](https://recharts.org/) |
-| **Icons** | [Lucide React](https://lucide.dev/) |
-| **QR Code** | promptpay-qr, qrcode.react |
-| **PDF** | jsPDF |
-| **Excel** | xlsx |
-| **Toast** | Sonner |
 
 ---
 

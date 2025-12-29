@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,6 +72,7 @@ import {
 export default function MembersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -238,56 +240,66 @@ export default function MembersPage() {
   };
 
   if (isLoading) return (
-    <div className="p-4 md:p-6 lg:p-8 space-y-6">
-       <div className="h-24 w-full bg-slate-100 rounded-2xl animate-pulse" />
-       
-       <div className="max-w-md">
-         <div className="h-11 w-full bg-slate-100 rounded-xl animate-pulse" />
-       </div>
+    <div className="h-screen max-h-screen p-4 md:p-6 lg:p-8 flex flex-col gap-4">
+      {/* Header Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm shrink-0">
+         <div className="flex items-center gap-4">
+            <div className="h-12 w-12 bg-slate-100 rounded-xl animate-pulse" />
+            <div className="space-y-2">
+               <div className="h-6 w-32 bg-slate-100 rounded animate-pulse" />
+               <div className="h-4 w-24 bg-slate-50 rounded animate-pulse" />
+            </div>
+         </div>
+         <div className="h-10 w-32 bg-slate-100 rounded-lg animate-pulse" />
+      </div>
 
-       <Card className="shadow-smooth border-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-slate-50">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <TableHead key={i}>
-                    <div className="h-4 w-16 bg-slate-200 rounded animate-pulse" />
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
-                       <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
-                    </div>
-                  </TableCell>
-                  <TableCell><div className="h-4 w-24 bg-slate-100 rounded animate-pulse" /></TableCell>
-                  <TableCell>
-                    <div className="flex justify-center">
-                       <div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse" />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-center">
-                       <div className="h-4 w-8 bg-slate-100 rounded animate-pulse" />
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right"><div className="h-4 w-20 bg-slate-100 rounded animate-pulse ml-auto" /></TableCell>
-                  <TableCell>
-                     <div className="flex justify-center gap-2">
-                        <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
-                        <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
-                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+       <Card className="shadow-smooth border-slate-100 flex-1 min-h-0 flex flex-col">
+        <div className="overflow-hidden border border-slate-100 rounded-xl h-full flex flex-col">
+           <div className="flex-1 overflow-auto">
+             <Table>
+               <TableHeader className="sticky top-0 z-10 bg-slate-50">
+                 <TableRow>
+                   {[
+                     'w-32', // Name
+                     'w-24', // Phone
+                     'w-20', // Points
+                     'w-20', // Orders
+                     'w-24', // Total Spent
+                     'w-24'  // Actions
+                   ].map((w, i) => (
+                     <TableHead key={i}>
+                       <div className={`h-4 ${w} bg-slate-200 rounded animate-pulse mx-auto`} />
+                     </TableHead>
+                   ))}
+                 </TableRow>
+               </TableHeader>
+               <TableBody>
+                 {Array.from({ length: 8 }).map((_, i) => (
+                   <TableRow key={i}>
+                     <TableCell>
+                        <div className="flex items-center gap-3">
+                           <div className="w-9 h-9 rounded-full bg-slate-100 animate-pulse" />
+                           <div className="space-y-1.5">
+                              <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                              <div className="h-3 w-20 bg-slate-50 rounded animate-pulse" />
+                           </div>
+                        </div>
+                     </TableCell>
+                     <TableCell><div className="h-4 w-24 bg-slate-100 rounded animate-pulse" /></TableCell>
+                     <TableCell><div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse mx-auto" /></TableCell>
+                     <TableCell><div className="h-6 w-12 bg-slate-100 rounded-full animate-pulse mx-auto" /></TableCell>
+                     <TableCell className="text-right"><div className="h-4 w-20 bg-slate-100 rounded animate-pulse ml-auto" /></TableCell>
+                     <TableCell>
+                        <div className="flex justify-center gap-2">
+                           <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+                           <div className="h-8 w-8 bg-slate-100 rounded-lg animate-pulse" />
+                        </div>
+                     </TableCell>
+                   </TableRow>
+                 ))}
+               </TableBody>
+             </Table>
+           </div>
         </div>
       </Card>
     </div>
@@ -305,8 +317,8 @@ export default function MembersPage() {
             <Users className="w-6 h-6 text-sky-600" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-800">สมาชิก (Members)</h1>
-            <p className="text-sm text-slate-500 mt-1">จัดการข้อมูลสมาชิกและแต้มสะสมทั้งหมด ({customers.length} คน)</p>
+            <h1 className="text-xl md:text-2xl font-bold text-slate-800">{t("members.title")}</h1>
+            <p className="text-sm text-slate-500 mt-1">{t("members.subtitle")} ({customers.length} {t("members.people")})</p>
           </div>
         </div>
 
@@ -315,7 +327,7 @@ export default function MembersPage() {
           className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white shadow-md border-0 relative z-10"
         >
           <Plus className="w-4 h-4 mr-2" />
-          เพิ่มสมาชิกใหม่
+          {t("members.addMember")}
         </Button>
       </div>
 
@@ -325,7 +337,7 @@ export default function MembersPage() {
           <Search className="h-4 w-4 text-slate-400" />
         </div>
         <Input
-          placeholder="ค้นหาด้วยชื่อ หรือเบอร์โทรศัพท์..."
+          placeholder={t("members.searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           className="pl-10 h-11 bg-white border-slate-200 focus:border-sky-300 focus:ring-sky-100 rounded-xl transition-all shadow-sm"
@@ -338,19 +350,19 @@ export default function MembersPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
-                <TableHead className="font-semibold">ชื่อ</TableHead>
-                <TableHead className="font-semibold">เบอร์โทร</TableHead>
-                <TableHead className="font-semibold text-center">แต้ม</TableHead>
-                <TableHead className="font-semibold text-center">ออเดอร์</TableHead>
-                <TableHead className="font-semibold text-right">ยอดสะสม</TableHead>
-                <TableHead className="font-semibold text-center w-[100px]">จัดการ</TableHead>
+                <TableHead className="font-semibold">{t("name")}</TableHead>
+                <TableHead className="font-semibold">{t("phone")}</TableHead>
+                <TableHead className="font-semibold text-center">{t("points")}</TableHead>
+                <TableHead className="font-semibold text-center">{t("members.orderCount")}</TableHead>
+                <TableHead className="font-semibold text-right">{t("members.totalSpent")}</TableHead>
+                <TableHead className="font-semibold text-center w-[100px]">{t("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {customers.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="h-32 text-center text-slate-400">
-                    ไม่พบข้อมูลสมาชิก
+                    {t("members.noMembers")}
                   </TableCell>
                 </TableRow>
               ) : (
