@@ -84,18 +84,22 @@ export async function PATCH(req: Request, props: Props) {
 }
 
 // DELETE: Soft Delete
+// DELETE: Hard Delete
 export async function DELETE(req: Request, props: Props) {
   try {
     const params = await props.params;
     const id = params.id;
 
-    await prisma.product.update({
+    await prisma.product.delete({
       where: { id },
-      data: { is_active: false },
     });
     revalidatePath("/");
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Delete failed:", error);
+    if (error.code === 'P2003') {
+       return NextResponse.json({ error: "ไม่สามารถลบสินค้าได้เนื่องจากมีรายการสั่งซื้อที่เกี่ยวข้อง\n(กรุณาใช้วิธีปิดสถานะแทน)" }, { status: 400 });
+    }
     return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 }
