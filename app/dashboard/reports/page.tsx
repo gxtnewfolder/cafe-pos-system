@@ -33,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   BarChart,
   Bar,
@@ -43,6 +44,16 @@ import {
 } from "recharts";
 import { downloadExcel } from "@/lib/export-excel";
 import { downloadPDF } from "@/lib/export-pdf";
+import { addDays, format, subDays } from "date-fns";
+import { th, enUS } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export interface ReportData {
   summary: {
@@ -66,27 +77,30 @@ export interface ReportData {
   }[];
 }
 
-// Helper to format date as YYYY-MM-DD
+// Helper to format date as YYYY-MM-DD (Local Time safe)
 const formatDateInput = (date: Date) => {
-  return date.toISOString().split("T")[0];
+  return format(date, "yyyy-MM-dd");
 };
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState("weekly"); // Default to 7 days
   
-  // Default dates: yesterday to today
-  const [startDate, setStartDate] = useState(() => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 7);
-    return formatDateInput(yesterday);
+  // Date Range State
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
   });
-  const [endDate, setEndDate] = useState(() => {
-    return formatDateInput(new Date());
-  });
+
+  // Derived strings for API
+  const startDate = date?.from ? formatDateInput(date.from) : "";
+  const endDate = date?.to ? formatDateInput(date.to) : (date?.from ? formatDateInput(date.from) : "");
   
   const [data, setData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Initial skeleton
   const [isFetching, setIsFetching] = useState(false); // Subtle refetch indicator
+  const { t, i18n } = useTranslation();
+
+  const dateLocale = i18n.language === 'th' ? 'th-TH' : 'en-US';
 
   useEffect(() => {
     const controller = new AbortController();
@@ -115,7 +129,7 @@ export default function ReportsPage() {
       } catch (error) {
         if ((error as Error).name !== 'AbortError') {
           console.error("Failed to fetch report:", error);
-          toast.error("โหลดรายงานไม่สำเร็จ");
+      toast.error(t("reports.loadError"));
         }
       } finally {
         if (!signal.aborted) {
@@ -124,6 +138,7 @@ export default function ReportsPage() {
         }
       }
     };
+
     fetchReport();
 
     return () => {
@@ -135,10 +150,10 @@ export default function ReportsPage() {
     if (!data) return;
     try {
       downloadExcel(data.orders, data.summary, data.topProducts);
-      toast.success("Export Excel สำเร็จ!");
+      toast.success(t("success"));
     } catch (error) {
       console.error("Excel export error:", error);
-      toast.error("เกิดข้อผิดพลาดในการสร้าง Excel");
+      toast.error(t("error"));
     }
   };
 
@@ -146,10 +161,10 @@ export default function ReportsPage() {
     if (!data) return;
     try {
       downloadPDF(data);
-      toast.success("ดาวน์โหลด PDF สำเร็จ!");
+      toast.success(t("success"));
     } catch (error) {
       console.error("PDF export error:", error);
-      toast.error("เกิดข้อผิดพลาดในการสร้าง PDF");
+      toast.error(t("error"));
     }
   };
 
@@ -196,7 +211,7 @@ export default function ReportsPage() {
       {isFetching && (
         <div className="fixed top-4 right-4 z-50 bg-blue-500 text-white px-3 py-1.5 rounded-full text-sm flex items-center gap-2 shadow-lg">
           <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          กำลังโหลด...
+          {t("loading")}
         </div>
       )}
       {/* Header */}
@@ -204,16 +219,16 @@ export default function ReportsPage() {
         <div>
           <h1 className="text-xl md:text-2xl font-bold text-slate-800 flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-emerald-600" />
-            รายงานยอดขาย
+            {t("reports.title")}
           </h1>
           <p className="text-slate-500 text-sm">
-            {new Date(data.summary.dateFrom).toLocaleDateString("th-TH", {
+            {new Date(data.summary.dateFrom).toLocaleDateString(dateLocale, {
               day: "numeric",
               month: "short",
               year: "numeric",
             })}{" "}
             -{" "}
-            {new Date(data.summary.dateTo).toLocaleDateString("th-TH", {
+            {new Date(data.summary.dateTo).toLocaleDateString(dateLocale, {
               day: "numeric",
               month: "short",
               year: "numeric",
@@ -247,9 +262,9 @@ export default function ReportsPage() {
       <div className="flex flex-wrap items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm shrink-0">
         <div className="flex gap-1">
           {[
-            { value: "daily", label: "วันนี้", days: 0 },
-            { value: "weekly", label: "7 วัน", days: 7 },
-            { value: "monthly", label: "30 วัน", days: 30 },
+            { value: "daily", labelKey: "reports.period.daily", days: 0 },
+            { value: "weekly", labelKey: "reports.period.weekly", days: 7 },
+            { value: "monthly", labelKey: "reports.period.monthly", days: 30 },
           ].map((p) => (
             <Button
               key={p.value}
@@ -257,35 +272,56 @@ export default function ReportsPage() {
               size="sm"
               onClick={() => {
                 setPeriod(p.value);
-                // Set date range based on period
-                const today = new Date();
-                const from = new Date();
-                from.setDate(today.getDate() - p.days);
-                setStartDate(formatDateInput(from));
-                setEndDate(formatDateInput(today));
+                setDate({
+                   from: subDays(new Date(), p.days),
+                   to: new Date()
+                });
               }}
-              className={period === p.value ? "bg-slate-800 h-8" : "h-8"}
+              className={period === p.value ? "bg-slate-800 h-8 font-medium" : "h-8 text-slate-600"}
             >
-              {p.label}
+              {t(p.labelKey)}
             </Button>
           ))}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <Calendar className="w-4 h-4 text-slate-400 hidden md:block" />
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-32 text-sm h-8"
-          />
-          <span className="text-slate-400">-</span>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-32 text-sm h-8"
-          />
+        <div className="ml-auto">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-[260px] justify-start text-left font-normal h-9 bg-white hover:bg-slate-50 border-slate-200",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <Calendar className="mr-2 h-4 w-4 text-emerald-600" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })} -{" "}
+                      {format(date.to, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })}
+                    </>
+                  ) : (
+                    format(date.from, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })
+                  )
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+                locale={i18n.language === 'th' ? th : enUS}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -294,7 +330,7 @@ export default function ReportsPage() {
         {/* Total Sales */}
         <Card className="shadow-sm hover:shadow-md transition-shadow border-emerald-100 bg-gradient-to-br from-white to-emerald-50/30">
           <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
-            <CardTitle className="text-xs font-semibold text-emerald-900/70">ยอดขายรวม</CardTitle>
+            <CardTitle className="text-xs font-semibold text-emerald-900/70">{t("reports.totalSales")}</CardTitle>
             <div className="p-1.5 rounded-md bg-emerald-100/50 text-emerald-700">
               <DollarSign className="h-3.5 w-3.5" />
             </div>
@@ -309,7 +345,7 @@ export default function ReportsPage() {
         {/* Total Orders */}
         <Card className="shadow-sm hover:shadow-md transition-shadow border-blue-100 bg-gradient-to-br from-white to-blue-50/30">
           <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
-            <CardTitle className="text-xs font-semibold text-blue-900/70">จำนวนออเดอร์</CardTitle>
+            <CardTitle className="text-xs font-semibold text-blue-900/70">{t("reports.totalOrders")}</CardTitle>
             <div className="p-1.5 rounded-md bg-blue-100/50 text-blue-700">
               <ShoppingBag className="h-3.5 w-3.5" />
             </div>
@@ -322,7 +358,7 @@ export default function ReportsPage() {
         {/* Average Order Value */}
         <Card className="shadow-sm hover:shadow-md transition-shadow border-violet-100 bg-gradient-to-br from-white to-violet-50/30">
           <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
-            <CardTitle className="text-xs font-semibold text-violet-900/70">ยอดเฉลี่ย/บิล</CardTitle>
+            <CardTitle className="text-xs font-semibold text-violet-900/70">{t("reports.avgOrderValue")}</CardTitle>
             <div className="p-1.5 rounded-md bg-violet-100/50 text-violet-700">
               <TrendingUp className="h-3.5 w-3.5" />
             </div>
@@ -337,7 +373,7 @@ export default function ReportsPage() {
         {/* Top Product */}
         <Card className="shadow-sm hover:shadow-md transition-shadow border-orange-100 bg-gradient-to-br from-white to-orange-50/30">
           <CardHeader className="flex flex-row items-center justify-between p-3 pb-1">
-            <CardTitle className="text-xs font-semibold text-orange-900/70">สินค้าขายดี</CardTitle>
+            <CardTitle className="text-xs font-semibold text-orange-900/70">{t("reports.topProduct")}</CardTitle>
             <div className="p-1.5 rounded-md bg-orange-100/50 text-orange-700">
               <Package className="h-3.5 w-3.5" />
             </div>
@@ -356,7 +392,7 @@ export default function ReportsPage() {
           <Card className="border-0 shadow-sm lg:col-span-2">
             <CardHeader className="pb-2 pt-4 px-4">
               <CardTitle className="text-base font-semibold text-slate-800">
-                กราฟยอดขาย
+                {t("reports.salesChart")}
               </CardTitle>
             </CardHeader>
             <CardContent className="pb-4 px-4">
@@ -370,7 +406,7 @@ export default function ReportsPage() {
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(date) =>
-                        new Date(date).toLocaleDateString("th-TH", {
+                        new Date(date).toLocaleDateString(dateLocale, {
                           day: "numeric",
                           month: "short",
                         })
@@ -396,9 +432,9 @@ export default function ReportsPage() {
                         boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
                         fontSize: '13px'
                       }}
-                      formatter={(value) => [`฿${Number(value).toLocaleString()}`, "ยอดขาย"]}
+                      formatter={(value) => [`฿${Number(value).toLocaleString()}`, t("dashboard.sales")]}
                       labelFormatter={(date) =>
-                        new Date(date).toLocaleDateString("th-TH", {
+                        new Date(date).toLocaleDateString(dateLocale, {
                           weekday: "long",
                           day: "numeric",
                           month: "long",
@@ -410,7 +446,7 @@ export default function ReportsPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="h-[280px] flex items-center justify-center text-slate-400">
-                  ไม่มีข้อมูลในช่วงเวลานี้
+                  {t("reports.noDataInPeriod")}
                 </div>
               )}
             </CardContent>
@@ -421,7 +457,7 @@ export default function ReportsPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-slate-800 flex items-center gap-2 text-base">
                 <div className="w-1 h-5 bg-orange-500 rounded-full"></div>
-                สินค้าขายดี Top 5
+                {t("reports.top5Products")}
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-auto">
@@ -446,7 +482,7 @@ export default function ReportsPage() {
                           </span>
                           <div>
                             <span className="text-slate-700 font-medium">{product.name}</span>
-                            <p className="text-xs text-slate-400">{product.quantity} ชิ้น</p>
+                            <p className="text-xs text-slate-400">{product.quantity} {t("reports.units")}</p>
                           </div>
                         </div>
                         <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs">
@@ -457,7 +493,7 @@ export default function ReportsPage() {
                   })
                 ) : (
                   <div className="py-6 text-center text-slate-400 text-sm">
-                    ไม่มีข้อมูล
+                    {t("reports.noData")}
                   </div>
                 )}
               </div>
@@ -468,10 +504,10 @@ export default function ReportsPage() {
           <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
             <CardTitle className="text-base text-slate-700 font-bold flex items-center gap-2">
               <div className="w-2 h-6 bg-slate-800 rounded-full"></div>
-              รายการออเดอร์
+              {t("reports.orderDetails")}
             </CardTitle>
             <Badge variant="secondary" className="bg-slate-100 text-slate-600">
-              {data.orders.length} รายการ
+              {data.orders.length} {t("items")}
             </Badge>
           </div>
           <CardContent className="p-0">
@@ -479,12 +515,12 @@ export default function ReportsPage() {
               <Table>
                 <TableHeader className="bg-slate-50 border-b border-slate-100">
                   <TableRow className="hover:bg-slate-50/50">
-                    <TableHead className="w-[100px] font-semibold text-slate-700">Order ID</TableHead>
-                    <TableHead className="font-semibold text-slate-700">วัน/เวลา</TableHead>
-                    <TableHead className="font-semibold text-slate-700">ลูกค้า</TableHead>
-                    <TableHead className="font-semibold text-slate-700">รายการ</TableHead>
-                    <TableHead className="font-semibold text-slate-700">ยอดรวม</TableHead>
-                    <TableHead className="font-semibold text-slate-700 text-center">ชำระ</TableHead>
+                    <TableHead className="w-[100px] font-semibold text-slate-700">{t("orderId")}</TableHead>
+                    <TableHead className="font-semibold text-slate-700">{t("datetime")}</TableHead>
+                    <TableHead className="font-semibold text-slate-700">{t("customer")}</TableHead>
+                    <TableHead className="font-semibold text-slate-700">{t("items")}</TableHead>
+                    <TableHead className="font-semibold text-slate-700">{t("total")}</TableHead>
+                    <TableHead className="font-semibold text-slate-700 text-center">{t("payment")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -497,17 +533,17 @@ export default function ReportsPage() {
                         <TableCell>
                           <div className="flex flex-col text-xs">
                             <span className="font-medium text-slate-700">
-                              {new Date(order.createdAt).toLocaleDateString("th-TH", {
+                              {new Date(order.createdAt).toLocaleDateString(dateLocale, {
                                 day: "numeric",
                                 month: "short",
                                 year: "numeric",
                               })}
                             </span>
                             <span className="text-slate-400 text-[10px]">
-                              {new Date(order.createdAt).toLocaleTimeString("th-TH", {
+                              {new Date(order.createdAt).toLocaleTimeString(dateLocale, {
                                 hour: "2-digit",
                                 minute: "2-digit",
-                              })} น.
+                              })}
                             </span>
                           </div>
                         </TableCell>
@@ -515,7 +551,7 @@ export default function ReportsPage() {
                           {order.customer !== "Guest" ? (
                             <span className="font-medium text-sm text-slate-700">{order.customer}</span>
                           ) : (
-                            <span className="text-slate-400 text-xs italic">- Guest -</span>
+                            <span className="text-slate-400 text-xs italic">- {t("guest")} -</span>
                           )}
                         </TableCell>
                         <TableCell className="text-xs text-slate-600 max-w-[180px] truncate">
@@ -544,7 +580,7 @@ export default function ReportsPage() {
                         colSpan={6}
                         className="h-32 text-center text-slate-400"
                       >
-                        ไม่มีออเดอร์ในช่วงเวลานี้
+                        {t("reports.noOrders")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -552,14 +588,14 @@ export default function ReportsPage() {
               </Table>
               {data.orders.length > 8 && (
                 <div className="p-3 text-center text-xs text-slate-500 border-t bg-slate-50">
-                  แสดง 8 จาก {data.orders.length} รายการ -{" "}
+                  {t("reports.showingCount", { count: 8, total: data.orders.length })} -{" "}
                   <button 
                     type="button"
                     className="text-blue-600 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
                     onClick={handleExportExcel}
                     aria-label="Export all orders to Excel"
                   >
-                    Export Excel เพื่อดูทั้งหมด
+                    {t("reports.viewAllExcel")}
                   </button>
                 </div>
               )}

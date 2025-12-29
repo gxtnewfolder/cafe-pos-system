@@ -30,6 +30,16 @@ import {
   DialogFooter,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -41,6 +51,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Product } from "@/app/generated/prisma/client";
+import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import {
@@ -69,6 +80,7 @@ const formatCategory = (cat: string) => {
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { t } = useTranslation();
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -112,6 +124,9 @@ export default function ProductsPage() {
   const [stockProductId, setStockProductId] = useState<string | null>(null);
   const [stockToAdd, setStockToAdd] = useState<number>(0);
 
+  // Delete Dialog State
+  const [deletePendingId, setDeletePendingId] = useState<string | null>(null);
+
   // 1. Fetch Products
   const fetchProducts = async () => {
     const res = await fetch("/api/products");
@@ -150,15 +165,21 @@ export default function ProductsPage() {
     }
   };
 
-  // 3. Handle Delete (Soft Delete)
+  // 3. Handle Delete (Hard Delete)
   const handleDelete = async (id: string) => {
-    if (!confirm("ยืนยันการลบ? (สินค้าจะถูกซ่อน)")) return;
+    // Confirmation handled by Dialog
     try {
-      await fetch(`/api/products/${id}`, { method: "DELETE" });
-      toast.success("ลบสำเร็จ");
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "เกิดข้อผิดพลาดในการลบ");
+      }
+
+      toast.success("ลบสินค้าสำเร็จ");
       fetchProducts();
-    } catch (e) {
-      toast.error("ลบไม่สำเร็จ");
+    } catch (e: any) {
+      toast.error(e.message || "ลบไม่สำเร็จ");
     }
   };
 
@@ -234,11 +255,11 @@ export default function ProductsPage() {
     <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between flex-wrap gap-4 shrink-0">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-800">จัดการสินค้า</h2>
-          <p className="text-slate-500 text-sm mt-1">เพิ่ม แก้ไข ลบสินค้าและจัดการสต็อก</p>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800">{t("products.title")}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t("products.subtitle")}</p>
         </div>
         <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
-          <Plus className="w-4 h-4" /> เพิ่มสินค้า
+          <Plus className="w-4 h-4" /> {t("products.addProduct")}
         </Button>
       </div>
 
@@ -247,14 +268,14 @@ export default function ProductsPage() {
         <Table>
           <TableHeader className="bg-slate-50 border-b border-slate-100">
             <TableRow className="hover:bg-slate-50/50">
-              <TableHead className="w-[80px] font-semibold text-slate-700">Image</TableHead>
-              <TableHead className="font-semibold text-slate-700">Code</TableHead>
-              <TableHead className="font-semibold text-slate-700">Name</TableHead>
-              <TableHead className="font-semibold text-slate-700">Category</TableHead>
-              <TableHead className="font-semibold text-slate-700">Price</TableHead>
-              <TableHead className="font-semibold text-slate-700">Stock</TableHead>
-              <TableHead className="font-semibold text-slate-700">Status</TableHead>
-              <TableHead className="text-right font-semibold text-slate-700 pr-6">Actions</TableHead>
+              <TableHead className="w-[80px] font-semibold text-slate-700">{t("image")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("products.code")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("name")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("category")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("price")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("stock")}</TableHead>
+              <TableHead className="font-semibold text-slate-700">{t("status")}</TableHead>
+              <TableHead className="text-right font-semibold text-slate-700 pr-6">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -374,7 +395,7 @@ export default function ProductsPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-red-400 hover:text-red-600 hover:bg-red-50"
-                      onClick={() => handleDelete(p.id)}
+                      onClick={() => setDeletePendingId(p.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -604,6 +625,33 @@ export default function ProductsPage() {
            </div>
         </DialogContent>
       </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletePendingId} onOpenChange={(open) => !open && setDeletePendingId(null)}>
+        <AlertDialogContent className="bg-white rounded-xl shadow-smooth border-0">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-red-600 flex items-center gap-2">
+              <Trash2 className="w-5 h-5" /> ยืนยันการลบถาวร?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              ข้อมูลสินค้านี้จะถูกลบออกจากระบบทันทีและไม่สามารถกู้คืนได้
+              <br/>
+              <span className="text-xs text-slate-400 mt-1 block">หากสินค้านี้มีประวัติการขาย ระบบจะไม่อนุญาตให้ลบ (ต้องใช้การปิดการขายแทน)</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-0 hover:bg-slate-50">ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (deletePendingId) handleDelete(deletePendingId);
+                setDeletePendingId(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg border-0"
+            >
+              ลบทิ้ง
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

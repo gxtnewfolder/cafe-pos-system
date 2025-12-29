@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Search } from "lucide-react";
 import { format } from "date-fns";
-import { th } from "date-fns/locale";
+import { th, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,9 @@ export default function OrderHistoryPage() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { t, i18n } = useTranslation();
+  
+  const dateLocale = i18n.language === 'th' ? th : enUS;
 
   useEffect(() => {
     fetch("/api/orders")
@@ -103,47 +107,55 @@ export default function OrderHistoryPage() {
   );
 
   if (isLoading) return (
-    <div className="p-4 md:p-6 space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
+      <div className="flex items-center justify-between shrink-0">
         <div>
            <div className="h-8 w-48 bg-slate-200 rounded-lg animate-pulse mb-2" />
            <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-4 rounded-xl border border-slate-100 shadow-sm shrink-0">
         <div className="flex-1 w-full h-10 bg-slate-100 rounded-lg animate-pulse" />
         <div className="w-48 h-10 bg-slate-100 rounded-lg animate-pulse" />
       </div>
 
-      <Card className="shadow-smooth border-slate-100">
-        <div className="rounded-xl overflow-hidden border border-slate-100">
-          <Table>
-             <TableHeader className="bg-slate-50">
-               <TableRow>
-                 {[1,2,3,4,5,6].map(i => (
-                    <TableHead key={i}><div className="h-4 w-24 bg-slate-200 rounded animate-pulse" /></TableHead>
-                 ))}
-               </TableRow>
-             </TableHeader>
-             <TableBody>
-               {Array.from({ length: 5 }).map((_, i) => (
-                 <TableRow key={i}>
-                   <TableCell><div className="h-4 w-16 bg-slate-100 rounded animate-pulse" /></TableCell>
-                   <TableCell>
-                      <div className="space-y-2">
-                        <div className="h-4 w-32 bg-slate-100 rounded animate-pulse" />
-                        <div className="h-3 w-24 bg-slate-50 rounded animate-pulse" />
-                      </div>
-                   </TableCell>
-                   <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
-                   <TableCell><div className="h-6 w-24 bg-slate-100 rounded-full animate-pulse" /></TableCell>
-                   <TableCell><div className="h-6 w-20 bg-slate-100 rounded-full animate-pulse" /></TableCell>
-                   <TableCell className="text-right"><div className="h-8 w-24 bg-slate-100 rounded-lg animate-pulse ml-auto" /></TableCell>
+      <Card className="shadow-smooth border-slate-100 flex-1 min-h-0 flex flex-col">
+        <div className="overflow-hidden border border-slate-100 rounded-xl h-full flex flex-col">
+          <div className="flex-1 overflow-auto">
+            <Table>
+               <TableHeader className="bg-slate-50 sticky top-0 z-10">
+                 <TableRow>
+                   {['w-[120px]', 'w-32', 'w-28', 'w-40', 'w-24', 'w-20', 'w-24'].map((w, i) => (
+                      <TableHead key={i}><div className={`h-4 ${w} bg-slate-200 rounded animate-pulse`} /></TableHead>
+                   ))}
                  </TableRow>
-               ))}
-             </TableBody>
-          </Table>
+               </TableHeader>
+               <TableBody>
+                 {Array.from({ length: 10 }).map((_, i) => (
+                   <TableRow key={i}>
+                     <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
+                     <TableCell>
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-28 bg-slate-100 rounded animate-pulse" />
+                          <div className="h-3 w-20 bg-slate-50 rounded animate-pulse" />
+                        </div>
+                     </TableCell>
+                     <TableCell>
+                        <div className="space-y-1.5">
+                          <div className="h-4 w-24 bg-slate-100 rounded animate-pulse" />
+                          <div className="h-3 w-20 bg-slate-50 rounded animate-pulse" />
+                        </div>
+                     </TableCell>
+                     <TableCell><div className="h-6 w-32 bg-slate-100 rounded-lg animate-pulse" /></TableCell>
+                     <TableCell><div className="h-4 w-20 bg-slate-100 rounded animate-pulse" /></TableCell>
+                     <TableCell><div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse" /></TableCell>
+                     <TableCell className="text-center"><div className="h-6 w-16 bg-slate-100 rounded-full animate-pulse mx-auto" /></TableCell>
+                   </TableRow>
+                 ))}
+               </TableBody>
+            </Table>
+          </div>
         </div>
       </Card>
     </div>
@@ -153,8 +165,8 @@ export default function OrderHistoryPage() {
     <div className="h-screen max-h-screen p-4 md:p-6 flex flex-col gap-4">
       <div className="flex items-center justify-between shrink-0">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">ประวัติการขาย</h2>
-          <p className="text-slate-500 text-sm mt-1">ดูรายการขายทั้งหมด</p>
+          <h2 className="text-2xl font-bold text-slate-800">{t("orders.title")}</h2>
+          <p className="text-slate-500 text-sm mt-1">{t("orders.subtitle")}</p>
         </div>
       </div>
 
@@ -162,16 +174,16 @@ export default function OrderHistoryPage() {
         <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="ค้นหา Order ID, ชื่อลูกค้า หรือเบอร์โทร..."
+            placeholder={t("orders.searchPlaceholder")}
             className="pl-9 bg-slate-50 border-slate-200 focus:bg-white transition-all"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
-           <span>สถานะ:</span>
-           <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">ทั้งหมด</Badge>
-           <Badge variant="secondary" className="bg-transparent text-slate-400 font-normal hover:bg-slate-50">วันนี้</Badge>
+           <span>{t("orders.statusFilter")}:</span>
+           <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">{t("all")}</Badge>
+           <Badge variant="secondary" className="bg-transparent text-slate-400 font-normal hover:bg-slate-50">{t("today")}</Badge>
         </div>
       </div>
 
@@ -179,23 +191,23 @@ export default function OrderHistoryPage() {
         <div className="p-4 pt-0 border-b border-slate-100 flex justify-between items-center bg-slate-50/30">
           <CardTitle className="text-base text-slate-700 font-bold flex items-center gap-2">
             <div className="w-2 h-6 bg-slate-800 rounded-full"></div>
-            รายการออเดอร์ล่าสุด
+            {t("orders.recentOrdersList")}
           </CardTitle>
           <Badge variant="secondary" className="bg-slate-100 text-slate-600">
-            {filteredOrders.length} รายการ
+            {filteredOrders.length} {t("items")}
           </Badge>
         </div>
         <CardContent className="p-0 flex-1 overflow-auto">
           <Table>
             <TableHeader className="bg-slate-50 border-b border-slate-100">
               <TableRow className="hover:bg-slate-50/50">
-                <TableHead className="w-[120px] font-semibold text-slate-700">Order ID</TableHead>
-                <TableHead className="font-semibold text-slate-700">Date/Time</TableHead>
-                <TableHead className="font-semibold text-slate-700">Customer</TableHead>
-                <TableHead className="font-semibold text-slate-700">Items</TableHead>
-                <TableHead className="font-semibold text-slate-700">Total</TableHead>
-                <TableHead className="font-semibold text-slate-700">Payment</TableHead>
-                <TableHead className="font-semibold text-slate-700 text-center">Status</TableHead>
+                <TableHead className="w-[120px] font-semibold text-slate-700">{t("orderId")}</TableHead>
+                <TableHead className="font-semibold text-slate-700">{t("datetime")}</TableHead>
+                <TableHead className="font-semibold text-slate-700">{t("customer")}</TableHead>
+                <TableHead className="font-semibold text-slate-700">{t("items")}</TableHead>
+                <TableHead className="font-semibold text-slate-700">{t("total")}</TableHead>
+                <TableHead className="font-semibold text-slate-700">{t("payment")}</TableHead>
+                <TableHead className="font-semibold text-slate-700 text-center">{t("status")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -204,7 +216,7 @@ export default function OrderHistoryPage() {
                    <TableCell colSpan={7} className="h-48 border-0">
                      <div className="flex flex-col items-center justify-center h-full text-slate-400 w-full">
                        <Search className="w-10 h-10 mb-2 opacity-20" />
-                       <span>ไม่พบข้อมูลออเดอร์ที่ค้นหา</span>
+                       <span>{t("orders.noOrders")}</span>
                      </div>
                    </TableCell>
                  </TableRow>
@@ -216,8 +228,8 @@ export default function OrderHistoryPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col text-xs md:text-sm">
-                        <span className="font-medium text-slate-700">{format(new Date(order.createdAt), "d MMM yyyy", { locale: th })}</span>
-                        <span className="text-slate-400 text-[10px]">{format(new Date(order.createdAt), "HH:mm น.", { locale: th })}</span>
+                        <span className="font-medium text-slate-700">{format(new Date(order.createdAt), "d MMM yyyy", { locale: dateLocale })}</span>
+                        <span className="text-slate-400 text-[10px]">{format(new Date(order.createdAt), "HH:mm", { locale: dateLocale })}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -227,7 +239,7 @@ export default function OrderHistoryPage() {
                           <span className="text-[10px] text-slate-400 font-mono tracking-tight">{order.customer.phone}</span>
                         </div>
                       ) : (
-                        <span className="text-slate-400 text-xs italic">- Guest -</span>
+                        <span className="text-slate-400 text-xs italic">- {t("guest")} -</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -242,7 +254,7 @@ export default function OrderHistoryPage() {
                         ))}
                         {order.items.length > 2 && (
                           <div className="text-[10px] text-slate-400 pl-7 font-medium">
-                            +{order.items.length - 2} items more...
+                            +{order.items.length - 2} {t("orders.moreItems")}...
                           </div>
                         )}
                       </div>

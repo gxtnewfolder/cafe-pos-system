@@ -12,7 +12,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#10b981",
+  themeColor: "#5ebfffff",
 };
 
 export const metadata: Metadata = {
@@ -38,13 +38,18 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+import { cookies } from "next/headers";
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const locale = cookieStore.get("NEXT_LOCALE")?.value || "th";
+
   return (
-    <html lang="th">
+    <html lang={locale}>
       <head>
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -52,7 +57,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Café POS" />
       </head>
       <body className={inter.className}>
-        <Providers>
+        <Providers locale={locale}>
            {children}
            <Toaster position="top-right"/>
         </Providers>

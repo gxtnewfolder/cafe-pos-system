@@ -20,6 +20,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useFeatures } from "@/lib/features";
 import { useStore } from "@/lib/store";
 import { StoreSettings, FeatureFlag } from "@/app/generated/prisma/client";
@@ -42,6 +43,7 @@ export default function SettingsPage() {
   // Global contexts for real-time sync
   const { refresh: refreshGlobalFeatures } = useFeatures();
   const { refresh: refreshGlobalStore } = useStore();
+  const { t } = useTranslation();
 
   // Form state
   const [storeName, setStoreName] = useState("");
@@ -107,12 +109,12 @@ export default function SettingsPage() {
       if (res.ok) {
         // Refresh global store settings for real-time sync
         await refreshGlobalStore();
-        toast.success("บันทึกการตั้งค่าเรียบร้อย");
+        toast.success(t("settings.saveSuccess"));
       } else {
         throw new Error("Failed to save");
       }
     } catch (error) {
-      toast.error("บันทึกไม่สำเร็จ");
+      toast.error(t("settings.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -125,13 +127,13 @@ export default function SettingsPage() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("รองรับเฉพาะ JPEG, PNG, GIF, WebP");
+      toast.error(t("settings.fileTypeError"));
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("ไฟล์ใหญ่เกินไป (สูงสุด 2MB)");
+      toast.error(t("settings.fileSizeError"));
       return;
     }
 
@@ -148,12 +150,12 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setStoreLogo(data.url);
-        toast.success("อัพโหลดโลโก้สำเร็จ");
+        toast.success(t("settings.uploadSuccess"));
       } else {
         throw new Error("Upload failed");
       }
     } catch (error) {
-      toast.error("อัพโหลดไม่สำเร็จ");
+      toast.error(t("settings.uploadError"));
     } finally {
       setIsUploading(false);
     }
@@ -191,12 +193,12 @@ export default function SettingsPage() {
       
       // Show appropriate toast message
       if (featuresToUpdate.length > 1) {
-        toast.success(`อัพเดท ${featuresToUpdate.length} features (รวม features ที่ต้องพึ่งพา)`);
+        toast.success(t("settings.featuresUpdated", { count: featuresToUpdate.length }));
       } else {
-        toast.success(enabled ? "เปิดใช้งาน Feature เรียบร้อย" : "ปิดใช้งาน Feature เรียบร้อย");
+        toast.success(enabled ? t("settings.featureEnabled") : t("settings.featureDisabled"));
       }
     } catch (error) {
-      toast.error("อัพเดทไม่สำเร็จ");
+      toast.error(t("settings.featureUpdateError"));
     }
   };
 
@@ -266,8 +268,8 @@ export default function SettingsPage() {
           <Settings className="w-6 h-6 text-slate-600" />
         </div>
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-800">Settings</h1>
-          <p className="text-sm text-slate-500">ตั้งค่าร้านและจัดการ Features</p>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">{t("settings.title")}</h1>
+          <p className="text-sm text-slate-500">{t("settings.subtitle")}</p>
         </div>
       </div>
 
@@ -277,10 +279,10 @@ export default function SettingsPage() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Store className="w-5 h-5 text-slate-600" />
-              ข้อมูลร้าน
+              {t("settings.storeInfo")}
             </CardTitle>
             <CardDescription>
-              ข้อมูลจะแสดงบนใบเสร็จและหน้าร้าน
+              {t("settings.storeInfoDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-0">
@@ -288,7 +290,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="store_name" className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-slate-400" />
-                ชื่อร้าน
+                {t("settings.storeName")}
               </Label>
               <Input
                 id="store_name"
@@ -303,7 +305,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <ImagePlus className="w-4 h-4 text-slate-400" />
-                โลโก้ร้าน
+                {t("settings.logo")}
               </Label>
               
               <input
@@ -334,7 +336,7 @@ export default function SettingsPage() {
                       className="text-xs"
                     >
                       {isUploading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Upload className="w-3 h-3 mr-1" />}
-                      เปลี่ยนรูป
+                      {t("settings.changeLogo")}
                     </Button>
                     <Button
                       type="button"
@@ -344,7 +346,7 @@ export default function SettingsPage() {
                       className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
                     >
                       <X className="w-3 h-3 mr-1" />
-                      ลบ
+                      {t("delete")}
                     </Button>
                   </div>
                 </div>
@@ -356,13 +358,13 @@ export default function SettingsPage() {
                   {isUploading ? (
                     <div className="flex flex-col items-center gap-2">
                       <Loader2 className="w-8 h-8 animate-spin text-sky-500" />
-                      <span className="text-sm text-slate-500">กำลังอัพโหลด...</span>
+                      <span className="text-sm text-slate-500">{t("settings.uploading")}</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-2">
                       <ImagePlus className="w-8 h-8 text-slate-300" />
-                      <span className="text-sm text-slate-500">คลิกเพื่ออัพโหลดโลโก้</span>
-                      <span className="text-xs text-slate-400">รองรับ JPEG, PNG, GIF, WebP (สูงสุด 2MB)</span>
+                      <span className="text-sm text-slate-500">{t("settings.clickToUpload")}</span>
+                      <span className="text-xs text-slate-400">{t("settings.supportedFormats")}</span>
                     </div>
                   )}
                 </div>
@@ -373,7 +375,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="address" className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-slate-400" />
-                ที่อยู่
+                {t("address")}
               </Label>
               <Input
                 id="address"
@@ -388,7 +390,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="phone" className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                เบอร์โทร
+                {t("phone")}
               </Label>
               <Input
                 id="phone"
@@ -403,7 +405,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <Label htmlFor="tax_id" className="flex items-center gap-2">
                 <FileText className="w-4 h-4 text-slate-400" />
-                เลขประจำตัวผู้เสียภาษี
+                {t("settings.taxId")}
               </Label>
               <Input
                 id="tax_id"
@@ -426,7 +428,7 @@ export default function SettingsPage() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              บันทึกการตั้งค่า
+              {t("settings.saveButton")}
             </Button>
           </CardContent>
         </Card>

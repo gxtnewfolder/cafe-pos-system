@@ -12,12 +12,27 @@ import {
   Settings,
   ChevronRight,
   BarChart3,
+  LogOut,
+  Globe,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StoreSettings, FeatureFlag } from "@/app/generated/prisma/client";
 import { useFeatures } from "@/lib/features";
 import { useStore } from "@/lib/store";
+import { useTranslation } from "react-i18next";
+import { useSession, signOut } from "next-auth/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FlagIcon } from "@/components/FlagIcons";
+import { setStoredLanguage } from "@/lib/tolgee";
 
 interface DashboardSidebarProps {
   initialFeatures: FeatureFlag[];
@@ -26,22 +41,22 @@ interface DashboardSidebarProps {
 
 const sidebarLinks = [
   {
-    title: "ภาพรวม",
+    titleKey: "dashboard.overview",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "สินค้า",
+    titleKey: "dashboard.products",
     href: "/dashboard/products",
     icon: Package,
   },
   {
-    title: "ประวัติการขาย",
+    titleKey: "dashboard.orders",
     href: "/dashboard/orders",
     icon: Receipt,
   },
   {
-    title: "รายงานยอดขาย",
+    titleKey: "dashboard.reports",
     href: "/dashboard/reports",
     icon: BarChart3,
     featureFlag: "reports",
@@ -65,6 +80,13 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
   };
   
   const showMembersMenu = isEnabled("members");
+  const { t, i18n } = useTranslation();
+  const { data: session } = useSession();
+
+  const changeLanguage = (lang: string) => {
+    i18n.changeLanguage(lang);
+    setStoredLanguage(lang);
+  };
 
   return (
     <aside className="w-16 lg:w-64 bg-white border-r border-slate-200/50 shadow-smooth flex flex-col shrink-0 transition-all duration-300">
@@ -89,7 +111,7 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
       <ScrollArea className="flex-1 py-4">
         <div className="px-2 lg:px-3 space-y-1">
           <p className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:block">
-            เมนูหลัก
+            {t("sidebar.mainMenu")}
           </p>
           {sidebarLinks.map((link) => {
             // Check if link requires a feature flag
@@ -108,10 +130,10 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
                       ? "bg-slate-100 text-slate-900 font-semibold shadow-sm"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
-                  title={link.title}
+                  title={t(link.titleKey)}
                 >
                   <link.icon className={`w-5 h-5 shrink-0 ${isActive ? "text-slate-800" : "text-slate-500"}`} />
-                  <span className="hidden lg:inline">{link.title}</span>
+                  <span className="hidden lg:inline">{t(link.titleKey)}</span>
                   {isActive && <ChevronRight className="w-4 h-4 ml-auto text-slate-400 hidden lg:block" />}
                 </Button>
               </Link>
@@ -121,7 +143,7 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
 
         <div className="px-2 lg:px-3 mt-6 space-y-1">
           <p className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider hidden lg:block">
-            การตั้งค่า
+            {t("sidebar.settings")}
           </p>
           {showMembersMenu && (
             <Link href="/dashboard/members">
@@ -132,10 +154,10 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
                     ? "bg-slate-800 text-white shadow-md"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 }`}
-                title="สมาชิก"
+                title={t("dashboard.members")}
               >
                 <Users className={`w-5 h-5 shrink-0 ${pathname === "/dashboard/members" ? "text-white" : "text-slate-500"}`} />
-                <span className="hidden lg:inline">สมาชิก</span>
+                <span className="hidden lg:inline">{t("dashboard.members")}</span>
                 {pathname === "/dashboard/members" && <ChevronRight className="w-4 h-4 ml-auto text-slate-300 hidden lg:block" />}
               </Button>
             </Link>
@@ -148,25 +170,81 @@ export default function DashboardSidebar({ initialFeatures, initialSettings }: D
                   ? "bg-slate-800 text-white shadow-md"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
               }`}
-              title="ตั้งค่าระบบ"
+              title={t("dashboard.settings")}
             >
               <Settings className={`w-5 h-5 shrink-0 ${pathname === "/dashboard/settings" ? "text-white" : "text-slate-500"}`} />
-              <span className="hidden lg:inline">ตั้งค่าระบบ</span>
+              <span className="hidden lg:inline">{t("dashboard.settings")}</span>
               {pathname === "/dashboard/settings" && <ChevronRight className="w-4 h-4 ml-auto text-slate-300 hidden lg:block" />}
             </Button>
           </Link>
         </div>
       </ScrollArea>
 
-      {/* Back to POS Button */}
-      <div className="p-2 lg:p-4 border-t border-slate-100">
+      {/* Footer - Profile Dropdown & Back to POS */}
+      <div className="p-2 lg:p-4 border-t border-slate-100 space-y-2">
+        {/* Profile Dropdown with Language */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="ghost" 
+              className="w-full justify-center lg:justify-start gap-3 h-11 px-3 hover:bg-slate-50"
+            >
+              <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white font-semibold text-sm shrink-0">
+                {session?.user?.name?.[0]?.toUpperCase() || 'M'}
+              </div>
+              <div className="hidden lg:flex flex-col items-start flex-1 min-w-0">
+                <span className="text-sm font-medium text-slate-700 truncate">
+                  {session?.user?.name || 'Manager'}
+                </span>
+                <FlagIcon language={i18n.language} className="w-4 h-4 rounded-sm" />
+              </div>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">{session?.user?.name || 'Manager'}</p>
+                <p className="text-xs text-slate-500">{session?.user?.email || 'Admin'}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel className="text-xs text-slate-400 uppercase">
+              {t("language.title")}
+            </DropdownMenuLabel>
+            <DropdownMenuItem 
+              onClick={() => changeLanguage('th')}
+              className="cursor-pointer"
+            >
+              <FlagIcon language="th" className="w-5 h-5 rounded-sm mr-2" />
+              {t("language.thai")}
+              {i18n.language === 'th' && <Check className="w-4 h-4 ml-auto text-emerald-500" />}
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => changeLanguage('en')}
+              className="cursor-pointer"
+            >
+              <FlagIcon language="en" className="w-5 h-5 rounded-sm mr-2" />
+              {t("language.english")}
+              {i18n.language === 'en' && <Check className="w-4 h-4 ml-auto text-emerald-500" />}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem 
+              onClick={() => signOut()}
+              className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              {t("auth.logout")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Link href="/">
           <Button
             className="w-full h-10 lg:h-12 bg-slate-800 hover:bg-slate-900 text-white shadow-lg hover:shadow-xl transition-all gap-2 font-semibold"
-            title="กลับหน้าขาย (POS)"
+            title={t("sidebar.backToPOS")}
           >
             <ShoppingCart className="w-4 h-4 shrink-0" />
-            <span className="hidden lg:inline">กลับหน้าขาย (POS)</span>
+            <span className="hidden lg:inline">{t("sidebar.backToPOS")}</span>
           </Button>
         </Link>
       </div>
