@@ -123,7 +123,7 @@ export default function MembersPage() {
       const data = await res.json();
       setCustomers(Array.isArray(data) ? data : []);
     } catch (error) {
-      toast.error("Failed to load members");
+      toast.error(t("members.loadError"));
     } finally {
       setIsLoading(false);
     }
@@ -172,7 +172,7 @@ export default function MembersPage() {
 
   const handleSave = async () => {
     if (!formPhone) {
-      toast.error("กรุณากรอกเบอร์โทร");
+      toast.error(t("members.phoneRequired"));
       return;
     }
 
@@ -192,7 +192,7 @@ export default function MembersPage() {
         });
 
         if (!res.ok) throw new Error("Update failed");
-        toast.success("อัพเดทข้อมูลเรียบร้อย");
+        toast.success(t("members.saveSuccess"));
       } else {
         // Create
         const res = await fetch("/api/customers", {
@@ -208,13 +208,13 @@ export default function MembersPage() {
           const data = await res.json();
           throw new Error(data.error || "Create failed");
         }
-        toast.success("เพิ่มสมาชิกเรียบร้อย");
+        toast.success(t("members.saveSuccess"));
       }
 
       setIsDialogOpen(false);
       fetchCustomers(searchQuery);
     } catch (error: any) {
-      toast.error(error.message || "เกิดข้อผิดพลาด");
+      toast.error(t("members.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -230,12 +230,12 @@ export default function MembersPage() {
 
       if (!res.ok) throw new Error("Delete failed");
 
-      toast.success("ลบสมาชิกเรียบร้อย");
+      toast.success(t("members.deleteSuccess"));
       setIsDeleteOpen(false);
       setDeleteTarget(null);
       fetchCustomers(searchQuery);
     } catch (error) {
-      toast.error("ลบไม่สำเร็จ");
+      toast.error(t("members.deleteError"));
     }
   };
 
@@ -481,33 +481,33 @@ export default function MembersPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingCustomer ? "แก้ไขข้อมูลสมาชิก" : "เพิ่มสมาชิกใหม่"}
+              {editingCustomer ? t("members.editDialogTitle") : t("members.addDialogTitle")}
             </DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>ชื่อ</Label>
+              <Label>{t("name")}</Label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                placeholder="ชื่อลูกค้า"
+                placeholder={t("name")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>เบอร์โทร *</Label>
+              <Label>{t("phone")} *</Label>
               <Input
                 value={formPhone}
                 onChange={(e) => setFormPhone(e.target.value)}
-                placeholder="0812345678"
+                placeholder="08xxxxxxxx"
                 disabled={!!editingCustomer}
               />
             </div>
 
             {editingCustomer && (
               <div className="space-y-2">
-                <Label>แต้มสะสม</Label>
+                <Label>{t("points")}</Label>
                 <Input
                   type="number"
                   value={formPoints}
@@ -524,7 +524,7 @@ export default function MembersPage() {
               onClick={() => setIsDialogOpen(false)}
               disabled={isSaving}
             >
-              ยกเลิก
+              {t("cancel")}
             </Button>
             <Button
               onClick={handleSave}
@@ -532,7 +532,7 @@ export default function MembersPage() {
               className="bg-slate-800 hover:bg-slate-900"
             >
               {isSaving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {editingCustomer ? "บันทึก" : "เพิ่มสมาชิก"}
+              {editingCustomer ? t("save") : t("add")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -542,19 +542,20 @@ export default function MembersPage() {
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>ยืนยันการลบ?</AlertDialogTitle>
+            <AlertDialogTitle>{t("members.confirmDeleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณต้องการลบข้อมูลของ "{deleteTarget?.name || deleteTarget?.phone}" หรือไม่? 
-              การดำเนินการนี้ไม่สามารถยกเลิกได้
+              {t("members.confirmDeleteDesc")}
+              <br/>
+              "{deleteTarget?.name || deleteTarget?.phone}"
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-700"
             >
-              ลบ
+              {t("members.deleteButton")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

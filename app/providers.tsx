@@ -4,13 +4,20 @@ import { SessionProvider } from "next-auth/react";
 import { FeatureProvider } from "@/lib/features";
 import { StoreProvider } from "@/lib/store";
 import { I18nextProvider } from "react-i18next";
-import { i18n } from "@/lib/tolgee";
+import { i18n, initTolgee } from "@/lib/tolgee";
+import { useState } from "react";
 
 interface ProvidersProps {
   children: React.ReactNode;
+  locale?: string;
 }
 
-export function Providers({ children }: ProvidersProps) {
+export function Providers({ children, locale }: ProvidersProps) {
+  // Initialize Tolgee with server-detected locale
+  useState(() => {
+    initTolgee(locale);
+  });
+
   return (
     <SessionProvider>
       <FeatureProvider>

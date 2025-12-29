@@ -9,23 +9,26 @@ import thTranslation from "@/messages/th.json";
 import enTranslation from "@/messages/en.json";
 
 // Get stored language from localStorage or cookie
-export function getStoredLanguage(): string {
+export function getStoredLanguage(serverLocale?: string): string {
+  // If server provided a locale (via props from layout), use it as source of truth
+  if (serverLocale) return serverLocale;
+
   if (typeof window !== "undefined") {
+    // Check document.documentElement.lang first (set by layout)
+    if (document.documentElement.lang) {
+      return document.documentElement.lang;
+    }
+
     // First check localStorage
     const storedLang = localStorage.getItem("language");
     if (storedLang) {
-      // Sync HTML lang attribute on load
-      document.documentElement.lang = storedLang;
       return storedLang;
     }
     
     // Then check cookie
     const cookieMatch = document.cookie.match(/NEXT_LOCALE=([^;]+)/);
     if (cookieMatch) {
-      const cookieLang = cookieMatch[1];
-      localStorage.setItem("language", cookieLang);
-      document.documentElement.lang = cookieLang;
-      return cookieLang;
+      return cookieMatch[1];
     }
   }
   return "th";
@@ -65,17 +68,30 @@ const tolgee = Tolgee()
     },
   });
 
-// Wrap i18next with Tolgee
-withTolgee(i18n, tolgee)
-  .use(initReactI18next)
-  .init({
-    lng: getStoredLanguage(),
-    fallbackLng: "th",
-    supportedLngs: ["th", "en"],
-    defaultNS: "translation",
-    interpolation: {
-      escapeValue: false, // React already escapes
-    },
-  });
+// Initialize Tolgee
+// We export an init function to be called by Providers with server-detected locale
+export function initTolgee(locale?: string) {
+  const lng = getStoredLanguage(locale);
+
+  // If already initialized, just change language if needed
+  if (i18n.isInitialized) {
+    if (i18n.language !== lng) {
+      i18n.changeLanguage(lng);
+    }
+    return;
+  }
+
+  withTolgee(i18n, tolgee)
+    .use(initReactI18next)
+    .init({
+      lng: lng,
+      fallbackLng: "th",
+      supportedLngs: ["th", "en"],
+      defaultNS: "translation",
+      interpolation: {
+        escapeValue: false, // React already escapes
+      },
+    });
+}
 
 export { i18n, tolgee };

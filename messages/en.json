@@ -140,7 +140,19 @@
         "totalSpent": "Total Spent",
         "orderCount": "Orders",
         "noMembers": "No members found",
-        "people": "people"
+        "people": "people",
+        "loadError": "Failed to load members",
+        "editDialogTitle": "Edit Member",
+        "addDialogTitle": "Add New Member",
+        "deleteSuccess": "Member deleted successfully",
+        "deleteError": "Failed to delete member",
+        "saveSuccess": "Member saved successfully",
+        "saveError": "Failed to save member",
+        "phoneRequired": "Phone number required",
+        "nameRequired": "Name required",
+        "confirmDeleteTitle": "Delete Member?",
+        "confirmDeleteDesc": "Points history will be lost and cannot be recovered.",
+        "deleteButton": "Delete Member"
     },
     "reports": {
         "title": "Sales Report",
@@ -180,7 +192,18 @@
         "uploading": "Uploading...",
         "clickToUpload": "Click to upload logo",
         "supportedFormats": "Supports JPEG, PNG, GIF, WebP (max 2MB)",
-        "features": "Feature Flags"
+        "features": "Feature Flags",
+        "saveSuccess": "Settings saved successfully",
+        "saveError": "Failed to save settings",
+        "saveButton": "Save Settings",
+        "uploadSuccess": "Logo uploaded successfully",
+        "uploadError": "Upload failed",
+        "fileSizeError": "File too large (max 2MB)",
+        "fileTypeError": "Only JPEG, PNG, GIF, WebP supported",
+        "featureEnabled": "Enabled feature: {{name}}",
+        "featureDisabled": "Disabled feature: {{name}}",
+        "featuresUpdated": "Updated {{count}} features",
+        "featureUpdateError": "Failed to update"
     },
     "auth": {
         "login": "Login",

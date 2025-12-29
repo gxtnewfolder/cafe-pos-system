@@ -109,12 +109,12 @@ export default function SettingsPage() {
       if (res.ok) {
         // Refresh global store settings for real-time sync
         await refreshGlobalStore();
-        toast.success("บันทึกการตั้งค่าเรียบร้อย");
+        toast.success(t("settings.saveSuccess"));
       } else {
         throw new Error("Failed to save");
       }
     } catch (error) {
-      toast.error("บันทึกไม่สำเร็จ");
+      toast.error(t("settings.saveError"));
     } finally {
       setIsSaving(false);
     }
@@ -127,13 +127,13 @@ export default function SettingsPage() {
     // Validate file type
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      toast.error("รองรับเฉพาะ JPEG, PNG, GIF, WebP");
+      toast.error(t("settings.fileTypeError"));
       return;
     }
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      toast.error("ไฟล์ใหญ่เกินไป (สูงสุด 2MB)");
+      toast.error(t("settings.fileSizeError"));
       return;
     }
 
@@ -150,12 +150,12 @@ export default function SettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setStoreLogo(data.url);
-        toast.success("อัพโหลดโลโก้สำเร็จ");
+        toast.success(t("settings.uploadSuccess"));
       } else {
         throw new Error("Upload failed");
       }
     } catch (error) {
-      toast.error("อัพโหลดไม่สำเร็จ");
+      toast.error(t("settings.uploadError"));
     } finally {
       setIsUploading(false);
     }
@@ -193,12 +193,12 @@ export default function SettingsPage() {
       
       // Show appropriate toast message
       if (featuresToUpdate.length > 1) {
-        toast.success(`อัพเดท ${featuresToUpdate.length} features (รวม features ที่ต้องพึ่งพา)`);
+        toast.success(t("settings.featuresUpdated", { count: featuresToUpdate.length }));
       } else {
-        toast.success(enabled ? "เปิดใช้งาน Feature เรียบร้อย" : "ปิดใช้งาน Feature เรียบร้อย");
+        toast.success(enabled ? t("settings.featureEnabled") : t("settings.featureDisabled"));
       }
     } catch (error) {
-      toast.error("อัพเดทไม่สำเร็จ");
+      toast.error(t("settings.featureUpdateError"));
     }
   };
 
@@ -428,7 +428,7 @@ export default function SettingsPage() {
               ) : (
                 <Save className="w-4 h-4 mr-2" />
               )}
-              บันทึกการตั้งค่า
+              {t("settings.saveButton")}
             </Button>
           </CardContent>
         </Card>
