@@ -44,6 +44,16 @@ import {
 } from "recharts";
 import { downloadExcel } from "@/lib/export-excel";
 import { downloadPDF } from "@/lib/export-pdf";
+import { addDays, format, subDays } from "date-fns";
+import { th, enUS } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 export interface ReportData {
   summary: {
@@ -67,23 +77,23 @@ export interface ReportData {
   }[];
 }
 
-// Helper to format date as YYYY-MM-DD
+// Helper to format date as YYYY-MM-DD (Local Time safe)
 const formatDateInput = (date: Date) => {
-  return date.toISOString().split("T")[0];
+  return format(date, "yyyy-MM-dd");
 };
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState("weekly"); // Default to 7 days
   
-  // Default dates: yesterday to today
-  const [startDate, setStartDate] = useState(() => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 7);
-    return formatDateInput(yesterday);
+  // Date Range State
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 7),
+    to: new Date(),
   });
-  const [endDate, setEndDate] = useState(() => {
-    return formatDateInput(new Date());
-  });
+
+  // Derived strings for API
+  const startDate = date?.from ? formatDateInput(date.from) : "";
+  const endDate = date?.to ? formatDateInput(date.to) : (date?.from ? formatDateInput(date.from) : "");
   
   const [data, setData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true); // Initial skeleton
@@ -128,6 +138,7 @@ export default function ReportsPage() {
         }
       }
     };
+
     fetchReport();
 
     return () => {
@@ -261,35 +272,56 @@ export default function ReportsPage() {
               size="sm"
               onClick={() => {
                 setPeriod(p.value);
-                // Set date range based on period
-                const today = new Date();
-                const from = new Date();
-                from.setDate(today.getDate() - p.days);
-                setStartDate(formatDateInput(from));
-                setEndDate(formatDateInput(today));
+                setDate({
+                   from: subDays(new Date(), p.days),
+                   to: new Date()
+                });
               }}
-              className={period === p.value ? "bg-slate-800 h-8" : "h-8"}
+              className={period === p.value ? "bg-slate-800 h-8 font-medium" : "h-8 text-slate-600"}
             >
               {t(p.labelKey)}
             </Button>
           ))}
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <Calendar className="w-4 h-4 text-slate-400 hidden md:block" />
-          <Input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-32 text-sm h-8"
-          />
-          <span className="text-slate-400">-</span>
-          <Input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-32 text-sm h-8"
-          />
+        <div className="ml-auto">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                id="date"
+                variant={"outline"}
+                className={cn(
+                  "w-[260px] justify-start text-left font-normal h-9 bg-white hover:bg-slate-50 border-slate-200",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <Calendar className="mr-2 h-4 w-4 text-emerald-600" />
+                {date?.from ? (
+                  date.to ? (
+                    <>
+                      {format(date.from, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })} -{" "}
+                      {format(date.to, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })}
+                    </>
+                  ) : (
+                    format(date.from, "LLL dd, y", { locale: i18n.language === 'th' ? th : enUS })
+                  )
+                ) : (
+                  <span>Pick a date</span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                initialFocus
+                mode="range"
+                defaultMonth={date?.from}
+                selected={date}
+                onSelect={setDate}
+                numberOfMonths={2}
+                locale={i18n.language === 'th' ? th : enUS}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
