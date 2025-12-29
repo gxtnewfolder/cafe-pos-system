@@ -44,18 +44,13 @@ export default async function middleware(req: NextRequest, event: NextFetchEvent
 }
 
 export const config = {
-  // Matcher for Auth
-  // Note: We might want locale setting on ALL pages, not just protected ones.
-  // But NextAuth matcher is mainly for protection.
-  // The middleware function runs for all paths in matcher.
-  // If we want locale on public pages, we should expand matcher or use separate config.
   // For now, let's keep user's matcher + login + root.
   matcher: [
     "/",
     "/dashboard/:path*",
-    "/api/:path*", // Protect all API? original was specific.
-    "/login", // Allow middleware to run on login to set locale? usually login is public.
-    // Original matcher:
-    // "/dashboard/:path*", "/api/dashboard/:path*", ...
+    // Explicitly exclude /api/auth to prevent blocking NextAuth endpoints
+    // This allows public access to auth routes while protecting all other API endpoints
+    "/api/((?!auth).*)",
+    "/login",
   ],
 };
