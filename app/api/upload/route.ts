@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, stat } from "fs/promises";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
 
 export async function POST(req: Request) {
   try {
@@ -35,41 +34,37 @@ export async function POST(req: Request) {
       );
     }
 
-    // Resolve public directory path
-    const rootDir = process.cwd();
-    const publicDir = path.join(rootDir, "public");
-    const uploadsDir = path.join(publicDir, "uploads");
-
-    // Ensure folders exist
-    try {
-      await mkdir(uploadsDir, { recursive: true });
-    } catch (err) {
-      // Ignore if exists
-    }
-
-    // Map extension
-    const mimeToExt: Record<string, string> = {
-      "image/jpeg": "jpg",
-      "image/jpg": "jpg",
-      "image/png": "png",
-      "image/gif": "gif",
-      "image/webp": "webp",
+    // Upload to Cloudinary using a promise to handle the stream
+    const uploadToCloudinary = () => {
+      return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+          {
+            folder: "cafe-pos",
+            resource_type: "auto",
+            // Image Optimization: f_auto (format) and q_auto (quality)
+            format: "webp", // Force webp or use f_auto
+            transformation: [
+              { quality: "auto", fetch_format: "auto" }
+            ],
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        uploadStream.end(buffer);
+      });
     };
-    const ext = mimeToExt[mimeType] || "bin";
-    const filename = `upload-${Date.now()}-${Math.floor(Math.random() * 1000)}.${ext}`;
-    const filepath = path.join(uploadsDir, filename);
 
-    // Write file
-    await writeFile(filepath, buffer);
-
-    // Return the public URL
-    const url = `/uploads/${filename}`;
+    const result = (await uploadToCloudinary()) as any;
 
     return NextResponse.json({ 
       success: true,
-      url,
-      name: filename,
-      size: file.size
+      url: result.secure_url,
+      name: result.public_id,
+      size: result.bytes,
+      width: result.width,
+      height: result.height
     });
 
   } catch (error: any) {
