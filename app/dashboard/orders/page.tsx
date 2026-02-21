@@ -52,6 +52,7 @@ export default function OrderHistoryPage() {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [timeRange, setTimeRange] = useState<"ALL" | "TODAY">("ALL");
   const { t, i18n } = useTranslation();
   
   const dateLocale = i18n.language === 'th' ? th : enUS;
@@ -72,14 +73,29 @@ export default function OrderHistoryPage() {
 
   useEffect(() => {
     const lowerSearch = search.toLowerCase();
-    const filtered = orders.filter((order) => 
-      order.id.toLowerCase().includes(lowerSearch) ||
-      order.customer?.name?.toLowerCase().includes(lowerSearch) ||
-      order.customer?.phone?.includes(lowerSearch)
-    );
+    const now = new Date();
+    const todayStr = format(now, "yyyy-MM-dd");
+
+    const filtered = orders.filter((order) => {
+      // 1. Search Filter
+      const matchSearch = order.id.toLowerCase().includes(lowerSearch) ||
+        order.customer?.name?.toLowerCase().includes(lowerSearch) ||
+        order.customer?.phone?.includes(lowerSearch);
+      
+      if (!matchSearch) return false;
+
+      // 2. Time Filter
+      if (timeRange === "TODAY") {
+        const orderDate = format(new Date(order.createdAt), "yyyy-MM-dd");
+        return orderDate === todayStr;
+      }
+
+      return true;
+    });
+
     setFilteredOrders(filtered);
-    setCurrentPage(1); // Reset to page 1 on search
-  }, [search, orders]);
+    setCurrentPage(1); // Reset to page 1 on search or filter change
+  }, [search, orders, timeRange]);
 
   // Pagination Logic
   const [currentPage, setCurrentPage] = useState(1);
@@ -182,8 +198,28 @@ export default function OrderHistoryPage() {
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-500">
            <span>{t("orders.statusFilter")}:</span>
-           <Badge variant="outline" className="bg-slate-50 text-slate-600 border-slate-200">{t("all")}</Badge>
-           <Badge variant="secondary" className="bg-transparent text-slate-400 font-normal hover:bg-slate-50">{t("today")}</Badge>
+           <Badge 
+             variant={timeRange === "ALL" ? "default" : "outline"} 
+             className={`cursor-pointer transition-all ${
+               timeRange === "ALL" 
+                 ? "bg-slate-800 text-white border-slate-800 shadow-sm" 
+                 : "bg-slate-50 text-slate-600 border-slate-200 hover:border-slate-300"
+             }`}
+             onClick={() => setTimeRange("ALL")}
+           >
+             {t("orders.filterAll")}
+           </Badge>
+           <Badge 
+             variant={timeRange === "TODAY" ? "secondary" : "outline"} 
+             className={`cursor-pointer transition-all ${
+               timeRange === "TODAY" 
+                 ? "bg-blue-100 text-blue-700 border-blue-200 shadow-sm font-bold" 
+                 : "bg-transparent text-slate-400 font-normal hover:bg-slate-50 border-slate-200"
+             }`}
+             onClick={() => setTimeRange("TODAY")}
+           >
+             {t("orders.filterToday")}
+           </Badge>
         </div>
       </div>
 

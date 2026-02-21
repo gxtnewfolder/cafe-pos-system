@@ -98,6 +98,9 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
   // Filter states
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  // Order config
+  const [orderType, setOrderType] = useState<"DINE_IN" | "TAKE_AWAY">("DINE_IN");
+  const [discount, setDiscount] = useState<string>("");
 
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -162,10 +165,12 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
     });
   };
 
+  const discountAmount = Math.max(0, Number(discount) || 0);
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0
   );
+  const finalTotal = Math.max(0, totalAmount - discountAmount);
 
   const refreshProducts = async () => {
     try {
@@ -187,7 +192,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
     }
   };
 
-  const handlePayment = async () => {
+  const handlePayment = async (paymentType: "QR" | "CASH") => {
     setIsProcessing(true);
     try {
       const response = await fetch("/api/orders", {
@@ -196,8 +201,10 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
         body: JSON.stringify({
           items: cart,
           totalAmount: totalAmount,
-          paymentType: "QR",
+          paymentType: paymentType,
           customerId: selectedCustomer?.id,
+          orderType,
+          discount: discountAmount,
         }),
       });
 
@@ -216,7 +223,8 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
       setCart([]);
       setSelectedCustomer(null);
-      // refreshProducts();
+      setDiscount("");
+      setOrderType("DINE_IN");
 
       toast.success(t("pos.orderSuccess"));
     } catch (error: any) {
@@ -477,6 +485,15 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       )}
 
+                      {/* ✅ Low Stock Badge */}
+                      {!isOutOfStock && product.stock > 0 && product.stock <= 5 && (
+                        <div className="absolute top-1 left-1 z-10">
+                          <Badge className="h-5 px-1.5 rounded-full text-[10px] font-bold shadow-md bg-amber-500 text-white border-0">
+                            {t("pos.lowStock")}
+                          </Badge>
+                        </div>
+                      )}
+
                       {/* ✅ Stock Badge - โชว์เฉพาะตอน Sold Out */}
                       {isOutOfStock && (
                         <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center">
@@ -616,10 +633,58 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
 
         {/* Cart Summary */}
         <div className="p-2 lg:p-5 bg-gradient-to-t from-slate-100 to-slate-50 border-t border-slate-100 space-y-3 lg:space-y-4 shrink-0">
+          {/* Order Type Toggle */}
+          <div className="flex items-center justify-between bg-white rounded-xl p-3 shadow-sm border border-slate-100">
+            <span className="text-xs font-semibold text-slate-600">{t("pos.orderType")}</span>
+            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+              <button
+                onClick={() => setOrderType("DINE_IN")}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200 ${
+                  orderType === "DINE_IN"
+                    ? "bg-white text-slate-800 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                🍽️ {t("pos.dineIn")}
+              </button>
+              <button
+                onClick={() => setOrderType("TAKE_AWAY")}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all duration-200 ${
+                  orderType === "TAKE_AWAY"
+                    ? "bg-white text-slate-800 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                🥡 {t("pos.takeAway")}
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-1.5 lg:space-y-2 bg-white rounded-xl p-2 lg:p-4 shadow-sm border border-slate-100">
             <div className="flex justify-between text-slate-500 text-xs lg:text-sm">
               <span>{t("subtotal")}</span>
               <span className="font-medium">฿{totalAmount.toLocaleString()}</span>
+            </div>
+            {/* Discount Row */}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-slate-500 text-xs lg:text-sm shrink-0">{t("pos.discountLabel")}</span>
+              <div className="relative w-24">
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-400">฿</span>
+                <Input
+                  type="number"
+                  min="0"
+                  max={totalAmount}
+                  value={discount}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || (Number(v) >= 0 && Number(v) <= totalAmount)) {
+                      setDiscount(v);
+                    }
+                  }}
+                  placeholder="0"
+                  className="pl-5 h-7 text-xs text-right bg-slate-50 border-slate-200 focus:bg-white"
+                />
+              </div>
             </div>
             <div className="flex justify-between text-slate-400 text-xs lg:text-sm">
               <span>{t("tax")}</span>
@@ -630,8 +695,13 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
               <span className="font-bold text-slate-700 text-xs lg:text-lg">{t("total")}</span>
               <div className="text-right">
                 <span className="text-lg lg:text-xl font-bold text-slate-800">
-                  ฿{totalAmount.toLocaleString()}
+                  ฿{finalTotal.toLocaleString()}
                 </span>
+                {discountAmount > 0 && (
+                  <div className="text-[10px] text-emerald-600 font-medium">
+                    -{discountAmount.toLocaleString()} {t("pos.discount")}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -645,7 +715,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
             disabled={cart.length === 0}
             onClick={() => setIsPaymentOpen(true)}
           >
-            {cart.length === 0 ? t("pos.empty") : t("pos.charge")}
+            {cart.length === 0 ? t("pos.empty") : `${t("pos.charge")} ฿${finalTotal.toLocaleString()}`}
           </Button>
         </div>
       </div>
@@ -653,7 +723,7 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
       <PaymentDialog
         isOpen={isPaymentOpen}
         onClose={handleClosePayment}
-        totalAmount={successOrder ? 0 : totalAmount}
+        totalAmount={successOrder ? 0 : finalTotal}
         onConfirm={handlePayment}
         isProcessing={isProcessing}
         successData={successOrder}

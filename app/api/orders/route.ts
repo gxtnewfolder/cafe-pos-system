@@ -5,24 +5,25 @@ import { revalidatePath } from "next/cache";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { items, totalAmount, paymentType, customerId } = body;
+    const { items, totalAmount, paymentType, customerId, orderType, discount } = body;
 
-    // 1. คำนวณแต้มที่จะได้ (Logic เดิม)
+    const discountAmount = Number(discount) || 0;
+    const finalAmount = Math.max(0, totalAmount - discountAmount);
+
+    // 1. คำนวณแต้มที่จะได้
     const totalItems = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
     const pointsEarned = totalItems;
 
-    // ✅ ใช้ Transaction: ทำทุกอย่างพร้อมกัน (ตัดของ + สร้างบิล + ให้แต้ม)
-    // ถ้าขั้นตอนไหนพัง (เช่น ของหมด) จะ Rollback ทั้งหมด ไม่มีการตัดเงินฟรี
+    // ✅ Transaction: ทำทุกอย่างพร้อมกัน (ตัดของ + สร้างบิล + ให้แต้ม)
     const result = await prisma.$transaction(async (tx) => {
 
       // ---------------------------------------------------------
-      // 2. (NEW) วนลูปเช็คสต็อกและตัดสต็อกสินค้าทีละตัว
+      // 2. วนลูปเช็คสต็อกและตัดสต็อก
       // ---------------------------------------------------------
       for (const item of items) {
-        const productId = item.product.id; // อิงตาม structure เดิมของคุณ
+        const productId = item.product.id;
         const quantity = item.quantity;
 
-        // ดึงข้อมูลสินค้าล่าสุดจาก DB (ผ่าน tx)
         const productInDb = await tx.product.findUnique({
           where: { id: productId }
         });
@@ -31,12 +32,10 @@ export async function POST(req: Request) {
           throw new Error(`ไม่พบสินค้า ID: ${productId} ในระบบ`);
         }
 
-        // เช็คว่าพอขายไหม
         if (productInDb.stock < quantity) {
           throw new Error(`สินค้า "${productInDb.name}" ของหมด! (เหลือ ${productInDb.stock})`);
         }
 
-        // ตัดสต็อก
         await tx.product.update({
           where: { id: productId },
           data: { stock: { decrement: quantity } }
@@ -44,19 +43,17 @@ export async function POST(req: Request) {
       }
 
       // ---------------------------------------------------------
-      // 3. สร้าง Order (Logic เดิม แต่เปลี่ยนจาก prisma -> tx)
+      // 3. สร้าง Order
       // ---------------------------------------------------------
       const newOrder = await tx.order.create({
         data: {
-          total_amount: totalAmount,
+          total_amount: finalAmount,
           payment_type: paymentType || "QR",
           status: "PAID",
-          order_type: "DINE_IN",
+          order_type: orderType === "TAKE_AWAY" ? "TAKE_AWAY" : "DINE_IN",
           
-          // เชื่อมลูกค้า (ถ้ามี)
           customer_id: customerId || null,
           
-          // สร้าง OrderItems
           items: {
             create: items.map((item: any) => ({
               product_id: item.product.id,

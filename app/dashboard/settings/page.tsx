@@ -438,10 +438,10 @@ export default function SettingsPage() {
           <CardHeader className="py-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Sparkles className="w-5 h-5 text-slate-600" />
-              Features
+              {t("settings.featuresTitle")}
             </CardTitle>
             <CardDescription>
-              เปิด/ปิด features ตามความต้องการ
+              {t("settings.featuresDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -483,7 +483,7 @@ export default function SettingsPage() {
                         
                         {requiresMembers && (
                           <Badge variant="secondary" className="px-1.5 py-0 text-[10px] bg-blue-50 text-blue-700 border-blue-200 shrink-0">
-                            Member Req.
+                            {t("settings.requiresMember")}
                           </Badge>
                         )}
                       </div>
@@ -495,7 +495,7 @@ export default function SettingsPage() {
                       {isDependencyMissing && !feature.enabled && (
                         <div className="flex items-center gap-2 mt-2 text-[10px] md:text-xs font-medium text-orange-700 bg-orange-100/50 p-1.5 rounded-lg border border-orange-200/50">
                           <AlertTriangle className="w-3 h-3 flex-shrink-0" />
-                          <span>ต้องเปิด "ระบบสมาชิก" ก่อน</span>
+                          <span>{t("settings.requiresMemberHint")}</span>
                         </div>
                       )}
                     </div>
@@ -515,7 +515,7 @@ export default function SettingsPage() {
                       className="mt-3 w-full h-8 text-xs text-amber-700 border-amber-200 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition-colors bg-white/50"
                     >
                       <Sparkles className="w-3 h-3 mr-1.5" />
-                      ปลดล็อก (Upgrade)
+                      {t("settings.unlockFeature")}
                     </Button>
                   )}
                 </div>
