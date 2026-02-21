@@ -22,7 +22,7 @@ interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   totalAmount: number;
-  onConfirm: () => void;
+  onConfirm: (paymentType: "QR" | "CASH") => void;
   isProcessing: boolean;
   onRefresh?: () => void;
   successData?: {
@@ -43,6 +43,7 @@ export default function PaymentDialog({
 }: PaymentDialogProps) {
   const PROMPTPAY_ID = "0993528844"; // ใส่เบอร์จริงของคุณ
   const [qrCodePayload, setQrCodePayload] = useState("");
+  const [paymentMode, setPaymentMode] = useState<"QR" | "CASH">("QR");
   const { isEnabled } = useFeatures();
 
   const isSuccess = !!successData;
@@ -122,26 +123,52 @@ export default function PaymentDialog({
           /* --- 2. หน้า QR Code (ปกติ) --- */
           <>
             <DialogHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="inline-flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                   <button 
+                     onClick={() => setPaymentMode("QR")}
+                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${paymentMode === 'QR' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500'}`}
+                   >
+                     QR Code
+                   </button>
+                   <button 
+                     onClick={() => setPaymentMode("CASH")}
+                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${paymentMode === 'CASH' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500'}`}
+                   >
+                     Cash
+                   </button>
+                </div>
+              </div>
               <DialogTitle className="text-center text-xl sm:text-2xl font-bold text-slate-800">
-                Payment
+                {paymentMode === 'QR' ? "PromptPay" : "Cash Payment"}
               </DialogTitle>
               <DialogDescription className="text-center text-base text-slate-500">
-                สแกน QR Code เพื่อชำระเงิน
+                {paymentMode === 'QR' ? "สแกน QR Code เพื่อชำระเงิน" : "รับเงินสดจากลูกค้า"}
               </DialogDescription>
             </DialogHeader>
 
             <div className="flex flex-col items-center justify-center space-y-6">
-              {/* กรอบ QR Code */}
-              <div className="bg-gradient-to-br from-white to-slate-50 p-5 rounded-2xl border-2 border-slate-100 shadow-smooth flex items-center justify-center">
-                {qrCodePayload && (
-                  <QRCodeCanvas
-                    value={qrCodePayload}
-                    size={200} // ขนาด 200px กำลังดีกับมือถือส่วนใหญ่
-                    level={"L"}
-                    className="w-full h-auto max-w-[200px]" // Responsive QR
-                  />
-                )}
-              </div>
+              {paymentMode === 'QR' ? (
+                /* QR Card */
+                <div className="bg-gradient-to-br from-white to-slate-50 p-5 rounded-2xl border-2 border-slate-100 shadow-smooth flex items-center justify-center animate-in fade-in zoom-in duration-300">
+                  {qrCodePayload && (
+                    <QRCodeCanvas
+                      value={qrCodePayload}
+                      size={200}
+                      level={"L"}
+                      className="w-full h-auto max-w-[200px]"
+                    />
+                  )}
+                </div>
+              ) : (
+                /* Cash Card */
+                <div className="bg-gradient-to-br from-white to-emerald-50/30 p-8 rounded-2xl border-2 border-emerald-100 shadow-smooth flex flex-col items-center justify-center animate-in fade-in slide-in-from-bottom-4 duration-300 w-full">
+                  <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                    <span className="text-4xl">💵</span>
+                  </div>
+                  <p className="text-emerald-700 font-bold">ยืนยันการรับเงินสด</p>
+                </div>
+              )}
 
               <div className="text-center space-y-2">
                 <p className="text-slate-500 text-sm">ยอดชำระทั้งหมด</p>
@@ -163,8 +190,12 @@ export default function PaymentDialog({
         */}
             <DialogFooter className="flex flex-col gap-3 sm:flex-col sm:space-x-0 w-full pt-2">
               <Button
-                className="w-full h-14 text-lg font-bold bg-green-600 hover:bg-green-700 shadow-lg active:scale-[0.98] transition-all hover:shadow-xl"
-                onClick={onConfirm}
+                className={`w-full h-14 text-lg font-bold shadow-lg text-white active:scale-[0.98] transition-all hover:shadow-xl ${
+                  paymentMode === 'QR' 
+                    ? 'bg-blue-600 hover:bg-blue-700 border-0' 
+                    : 'bg-emerald-600 hover:bg-emerald-700 border-0'
+                }`}
+                onClick={() => onConfirm(paymentMode)}
                 disabled={isProcessing}
               >
                 {isProcessing ? (
@@ -175,7 +206,7 @@ export default function PaymentDialog({
                 ) : (
                   <>
                     <CheckCircle2 className="mr-2 h-6 w-6" />
-                    ยืนยันการชำระเงิน (Paid)
+                    {paymentMode === 'QR' ? "ยืนยันชำระเงิน (QR)" : "ยืนยันรับเงินสด (Cash)"}
                   </>
                 )}
               </Button>

@@ -10,6 +10,7 @@ import {
   CheckCircle,
   XCircle,
   Minus,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,17 @@ export default function ProductsPage() {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  // Derived: filtered products
+  const filteredProducts = products.filter((p) => {
+    const matchCat = categoryFilter === "ALL" || p.category.toUpperCase() === categoryFilter;
+    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (p.code || "").toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchSearch;
+  });
 
   useEffect(() => {
     const calculateItems = () => {
@@ -99,8 +111,8 @@ export default function ProductsPage() {
     return () => window.removeEventListener('resize', calculateItems);
   }, []);
 
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const paginatedProducts = products.slice(
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
      (currentPage - 1) * itemsPerPage,
      currentPage * itemsPerPage
   );
@@ -139,6 +151,53 @@ export default function ProductsPage() {
     fetchProducts();
   }, []);
 
+  // 1.5 Handle Image Upload
+  const [isUploading, setIsUploading] = useState(false);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Client-side Validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(t("settings.uploadError"), { 
+        description: "อนุญาตเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP) เท่านั้นครับ" 
+      });
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast.error(t("settings.uploadError"), { 
+        description: "ขนาดไฟล์ต้องไม่เกิน 2MB นะครับ" 
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.url) {
+        setFormData((prev) => ({ ...prev, image_url: data.url }));
+        toast.success(t("settings.uploadSuccess"));
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (err: any) {
+      toast.error(t("settings.uploadError"), { description: err.message });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // 2. Handle Submit (Create/Update)
   const handleSubmit = async () => {
     try {
@@ -157,11 +216,11 @@ export default function ProductsPage() {
 
       if (!res.ok) throw new Error();
 
-      toast.success(isEditing ? "แก้ไขสำเร็จ" : "เพิ่มสินค้าสำเร็จ");
+      toast.success(isEditing ? t("products.editSuccess") : t("products.addSuccess"));
       setIsOpen(false);
-      fetchProducts(); // Refresh list
+      fetchProducts();
     } catch (error) {
-      toast.error("เกิดข้อผิดพลาด");
+      toast.error(t("products.addError"));
     }
   };
 
@@ -173,13 +232,13 @@ export default function ProductsPage() {
       
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "เกิดข้อผิดพลาดในการลบ");
+        throw new Error(data.error || t("products.deleteError"));
       }
 
-      toast.success("ลบสินค้าสำเร็จ");
+      toast.success(t("products.deleteSuccess"));
       fetchProducts();
     } catch (e: any) {
-      toast.error(e.message || "ลบไม่สำเร็จ");
+      toast.error(e.message || t("products.deleteError"));
     }
   };
 
@@ -201,7 +260,7 @@ export default function ProductsPage() {
 
       const newStock = product.stock + stockToAdd;
       if (newStock < 0) {
-        toast.error("Stock cannot be negative");
+        toast.error(t("products.stockNegativeError"));
         return;
       }
 
@@ -213,11 +272,11 @@ export default function ProductsPage() {
 
       if (!res.ok) throw new Error();
 
-      toast.success("Stock updated successfully");
+      toast.success(t("products.stockUpdateSuccess"));
       setIsStockOpen(false);
       fetchProducts();
     } catch (e) {
-      toast.error("Failed to update stock");
+      toast.error(t("products.stockUpdateError"));
     }
   };
 
@@ -261,6 +320,34 @@ export default function ProductsPage() {
         <Button onClick={openAdd} className="gap-2 bg-slate-800 hover:bg-slate-900 shadow-lg">
           <Plus className="w-4 h-4" /> {t("products.addProduct")}
         </Button>
+      </div>
+
+      {/* Search & Category Filter */}
+      <div className="flex items-center gap-2 flex-wrap shrink-0">
+        <div className="relative flex-1 min-w-[160px] max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <Input
+            placeholder={t("products.searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+            className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white"
+          />
+        </div>
+        <div className="flex items-center gap-1">
+          {["ALL", "COFFEE", "NON_COFFEE", "BAKERY"].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => { setCategoryFilter(cat); setCurrentPage(1); }}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 ${
+                categoryFilter === cat
+                  ? "bg-slate-800 text-white border-slate-800 shadow-sm"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              {cat === "ALL" ? t("products.filterAll") : formatCategory(cat)}
+            </button>
+          ))}
+        </div>
       </div>
 
       <Card className="shadow-smooth border-0 bg-white overflow-hidden rounded-xl gap-0 flex flex-col min-h-0 flex-1 pt-4 pb-2">
@@ -313,13 +400,13 @@ export default function ProductsPage() {
                   </TableCell>
                 </TableRow>
               ))
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-60 text-center">
                   <div className="flex flex-col items-center justify-center text-slate-400">
-                    <Package className="w-12 h-12 mb-2 opacity-50" />
-                    <p className="text-lg font-medium">ไม่มีสินค้าในระบบ</p>
-                    <p className="text-sm">เริ่มต้นด้วยการเพิ่มสินค้าใหม่</p>
+                    <Search className="w-12 h-12 mb-2 opacity-50" />
+                    <p className="text-lg font-medium">{t("products.noProducts")}</p>
+                    <p className="text-sm">{searchQuery ? t("pos.tryOtherSearch") : t("products.clickToAdd")}</p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -460,7 +547,7 @@ export default function ProductsPage() {
           <DialogHeader className="border-b border-slate-100 pb-4">
             <DialogTitle className="text-xl font-bold text-slate-800 flex items-center gap-2">
               {isEditing ? <Pencil className="w-5 h-5 text-blue-600" /> : <Plus className="w-5 h-5 text-emerald-600" />}
-              {isEditing ? "แก้ไขสินค้า" : "เพิ่มสินค้าใหม่"}
+              {isEditing ? t("products.editProduct") : t("products.addProduct")}
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-6 pt-4">
@@ -475,23 +562,52 @@ export default function ProductsPage() {
                     )}
                   </div>
                   <div className="flex-1 space-y-2">
-                     <Label>รูปภาพ URL</Label>
-                      <Input
-                        value={formData.image_url}
-                        onChange={(e) =>
-                          setFormData({ ...formData, image_url: e.target.value })
-                        }
-                        placeholder="https://..."
-                        className="font-mono text-xs bg-slate-50"
-                      />
-                      <p className="text-[10px] text-slate-400">วางลิงก์รูปภาพสินค้าที่นี่</p>
+                     <Label>{t("products.imageUrl")}</Label>
+                     <div className="flex gap-2">
+                       <Input
+                         value={formData.image_url}
+                         onChange={(e) =>
+                           setFormData({ ...formData, image_url: e.target.value })
+                         }
+                         placeholder="https://..."
+                         className="font-mono text-xs bg-slate-50 flex-1"
+                       />
+                       <div className="relative">
+                         <input
+                           type="file"
+                           accept="image/*"
+                           onChange={handleFileUpload}
+                           className="hidden"
+                           id="product-image-upload"
+                           disabled={isUploading}
+                         />
+                         <Button
+                           type="button"
+                           variant="outline"
+                           size="sm"
+                           className="h-9 px-2 text-[10px] shrink-0"
+                           disabled={isUploading}
+                           asChild
+                         >
+                           <label htmlFor="product-image-upload" className="cursor-pointer flex items-center gap-1">
+                             {isUploading ? (
+                               <Loader2 className="w-3 h-3 animate-spin" />
+                             ) : (
+                               <Plus className="w-3 h-3" />
+                             )}
+                             {t("settings.uploadLogo")}
+                           </label>
+                         </Button>
+                       </div>
+                     </div>
+                     <p className="text-[10px] text-slate-400">{t("products.imageUrlPlaceholder")}</p>
                   </div>
                </div>
              </div>
 
              {/* Form Fields - Compact Grid */}
              <div className="space-y-2">
-                <Label>รหัสสินค้า (Code)</Label>
+                <Label>{t("products.productCode")}</Label>
                 <Input
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value })}
@@ -501,7 +617,7 @@ export default function ProductsPage() {
              </div>
 
              <div className="space-y-2">
-               <Label>หมวดหมู่</Label>
+               <Label>{t("category")}</Label>
                <Select
                   value={formData.category}
                   onValueChange={(v) =>
@@ -520,17 +636,17 @@ export default function ProductsPage() {
              </div>
 
              <div className="col-span-2 md:col-span-2 space-y-2">
-               <Label>ชื่อสินค้า</Label>
+               <Label>{t("products.productName")}</Label>
                <Input
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="ชื่อสินค้าภาษาไทย หรือ อังกฤษ"
+                  placeholder={t("products.productNamePlaceholder")}
                   className="text-lg font-medium bg-slate-50"
                />
              </div>
 
              <div className="space-y-2">
-               <Label>ราคา (บาท)</Label>
+               <Label>{t("products.basePrice")}</Label>
                <div className="relative">
                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">฿</span>
                  <Input
@@ -543,7 +659,7 @@ export default function ProductsPage() {
              </div>
 
              <div className="space-y-2">
-               <Label>สต็อกตั้งต้น</Label>
+               <Label>{t("products.initialStock")}</Label>
                <Input
                   type="number"
                   value={formData.stock}
@@ -554,8 +670,8 @@ export default function ProductsPage() {
 
              <div className="col-span-2 flex items-center justify-between border border-slate-200 p-3 rounded-xl bg-slate-50/50 mt-2">
                <div className="space-y-0.5">
-                  <Label className="text-sm font-semibold text-slate-700">สถานะการขาย</Label>
-                  <p className="text-xs text-slate-500">เปิด Switch เพื่อแสดงสินค้านี้ในหน้า POS</p>
+                  <Label className="text-sm font-semibold text-slate-700">{t("products.saleStatus")}</Label>
+                  <p className="text-xs text-slate-500">{t("products.saleStatusHint")}</p>
                </div>
                <Switch
                   checked={formData.is_active}
@@ -564,9 +680,9 @@ export default function ProductsPage() {
              </div>
           </div>
           <DialogFooter className="pt-6 mt-2 border-t border-slate-100 flex gap-2">
-            <Button variant="ghost" onClick={() => setIsOpen(false)} className="hover:bg-slate-100">ยกเลิก</Button>
+            <Button variant="ghost" onClick={() => setIsOpen(false)} className="hover:bg-slate-100">{t("cancel")}</Button>
             <Button onClick={handleSubmit} className="bg-slate-800 hover:bg-slate-900 min-w-[120px] shadow-lg hover:shadow-xl transition-all">
-              {isEditing ? "บันทึกแก้ไข" : "ยืนยันเพิ่มสินค้า"}
+              {isEditing ? t("products.confirmEdit") : t("products.confirmSave")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -576,7 +692,7 @@ export default function ProductsPage() {
       <Dialog open={isStockOpen} onOpenChange={setIsStockOpen}>
         <DialogContent className="max-w-sm rounded-2xl shadow-smooth border-0 bg-white">
            <DialogHeader>
-             <DialogTitle className="text-center pb-4 border-b border-slate-100 text-slate-800">ปรับปรุงสต็อกสินค้า</DialogTitle>
+             <DialogTitle className="text-center pb-4 border-b border-slate-100 text-slate-800">{t("products.stockDialogTitle")}</DialogTitle>
            </DialogHeader>
            <div className="space-y-6 py-2">
              <div className="flex flex-col items-center justify-center gap-4">
@@ -617,9 +733,9 @@ export default function ProductsPage() {
              </div>
 
              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Button variant="ghost" onClick={() => setIsStockOpen(false)} className="hover:bg-slate-100">ยกเลิก</Button>
+                <Button variant="ghost" onClick={() => setIsStockOpen(false)} className="hover:bg-slate-100">{t("cancel")}</Button>
                 <Button onClick={handleStockUpdate} className="bg-slate-800 hover:bg-slate-900 shadow-md">
-                  ยืนยัน
+                  {t("confirm")}
                 </Button>
              </div>
            </div>
@@ -628,18 +744,18 @@ export default function ProductsPage() {
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletePendingId} onOpenChange={(open) => !open && setDeletePendingId(null)}>
         <AlertDialogContent className="bg-white rounded-xl shadow-smooth border-0">
-          <AlertDialogHeader>
+           <AlertDialogHeader>
             <AlertDialogTitle className="text-red-600 flex items-center gap-2">
-              <Trash2 className="w-5 h-5" /> ยืนยันการลบถาวร?
+              <Trash2 className="w-5 h-5" /> {t("products.confirmDelete")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-slate-600">
-              ข้อมูลสินค้านี้จะถูกลบออกจากระบบทันทีและไม่สามารถกู้คืนได้
+              {t("products.deleteWarning")}
               <br/>
-              <span className="text-xs text-slate-400 mt-1 block">หากสินค้านี้มีประวัติการขาย ระบบจะไม่อนุญาตให้ลบ (ต้องใช้การปิดการขายแทน)</span>
+              <span className="text-xs text-slate-400 mt-1 block">{t("products.deleteOrderedWarning")}</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-0 hover:bg-slate-50">ยกเลิก</AlertDialogCancel>
+            <AlertDialogCancel className="border-0 hover:bg-slate-50">{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => {
                 if (deletePendingId) handleDelete(deletePendingId);
@@ -647,7 +763,7 @@ export default function ProductsPage() {
               }}
               className="bg-red-600 hover:bg-red-700 text-white shadow-md hover:shadow-lg border-0"
             >
-              ลบทิ้ง
+              {t("products.confirmDeleteBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

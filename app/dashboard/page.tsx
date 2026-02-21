@@ -10,8 +10,11 @@ import {
   Target,
   RefreshCw,
   Check,
+  MessageSquareQuote,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AISummary } from "../../components/AISummary";
 import {
   Card,
   CardContent,
@@ -40,6 +43,7 @@ interface DashboardData {
   topProducts: { name: string; qty: number }[];
   salesChartData: { date: string; sales: number }[];
   lowStockItems: { id: string; name: string; stock: number }[];
+  paymentBreakdown: { QR: number; CASH: number };
 }
 
 export default function DashboardPage() {
@@ -176,6 +180,9 @@ export default function DashboardPage() {
         </Button>
       </div>
 
+      {/* AI Summary Section */}
+      <AISummary />
+
       {/* 1. Stats Cards - Responsive Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Sales */}
@@ -212,18 +219,18 @@ export default function DashboardPage() {
         </Card>
 
         {/* Average Order Value */}
-        <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-violet-100 bg-gradient-to-br from-white to-violet-50/30">
+        <Card className="flex flex-col shadow-sm hover:shadow-md transition-shadow border-amber-100 bg-gradient-to-br from-white to-amber-50/30">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-semibold text-violet-900/70">{t("dashboard.avgOrderValue")}</CardTitle>
-            <div className="p-2 rounded-lg bg-violet-100/50 text-violet-700">
+            <CardTitle className="text-sm font-semibold text-amber-900/70">{t("dashboard.avgOrderValue")}</CardTitle>
+            <div className="p-2 rounded-lg bg-amber-100/50 text-amber-700">
               <Target className="h-4 w-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-violet-700">
+            <div className="text-2xl font-bold text-amber-700">
               ฿{data.stats.totalOrders > 0 ? Math.round(data.stats.totalSales / data.stats.totalOrders).toLocaleString() : 0}
             </div>
-            <p className="text-xs text-violet-500 mt-1">{t("dashboard.avgPerOrder")}</p>
+            <p className="text-xs text-amber-500 mt-1">{t("dashboard.avgPerOrder")}</p>
           </CardContent>
         </Card>
 
@@ -255,6 +262,59 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* 1.5 Payment Breakdown */}
+      {(data.paymentBreakdown?.QR > 0 || data.paymentBreakdown?.CASH > 0) && (
+        <Card className="shadow-sm border-slate-100 bg-white">
+          <CardHeader className="pb-3 pt-4 px-5">
+            <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+              <div className="w-1 h-4 bg-slate-400 rounded-full"></div>
+              {t("dashboard.paymentBreakdown")}
+              <span className="text-xs font-normal text-slate-400 ml-1">— {t("dashboard.ordersToday")}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-5 pb-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* QR */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>
+                    {t("dashboard.qrPayments")}
+                  </span>
+                  <span className="text-sm font-bold text-blue-700">{data.paymentBreakdown?.QR ?? 0}</span>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-700"
+                    style={{
+                      width: `${data.stats.totalOrders > 0 ? ((data.paymentBreakdown?.QR ?? 0) / data.stats.totalOrders) * 100 : 0}%`
+                    }}
+                  />
+                </div>
+              </div>
+              {/* CASH */}
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-medium text-slate-600 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                    {t("dashboard.cashPayments")}
+                  </span>
+                  <span className="text-sm font-bold text-emerald-700">{data.paymentBreakdown?.CASH ?? 0}</span>
+                </div>
+                <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-700"
+                    style={{
+                      width: `${data.stats.totalOrders > 0 ? ((data.paymentBreakdown?.CASH ?? 0) / data.stats.totalOrders) * 100 : 0}%`
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 md:grid-cols-1 xl:grid-cols-7">
         {/* 2. Chart (กินพื้นที่ 4 ส่วนใน XL, เต็มจอใน MD/LG) */}

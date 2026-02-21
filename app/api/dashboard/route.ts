@@ -82,11 +82,18 @@ export async function GET() {
         take: 5
     });
 
+    // 5. Payment breakdown (QR vs CASH)
+    const paymentBreakdown = {
+      QR: todayOrders.filter(o => o.payment_type === "QR").length,
+      CASH: todayOrders.filter(o => o.payment_type === "CASH").length,
+    };
+
     return NextResponse.json({
         stats: { totalSales, totalOrders, salesChangePercentage },
         topProducts,
         salesChartData,
-        lowStockItems
+        lowStockItems,
+        paymentBreakdown
     });
 
   } catch (error: any) {
