@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { startOfDay, endOfDay, subDays } from "date-fns";
+import { AI_CONFIG } from "@/lib/ai-config";
 
 export const dynamic = 'force-dynamic';
 
@@ -48,43 +49,32 @@ export async function GET() {
         .sort((a, b) => b.qty - a.qty)
         .slice(0, 3);
 
-    // 4. Time distribution (Simple)
+    // 4. Time distribution
     const hours = todayOrders.map(o => new Date(o.createdAt).getHours());
     const morningCount = hours.filter(h => h >= 6 && h < 12).length;
     const afternoonCount = hours.filter(h => h >= 12 && h < 17).length;
     const eveningCount = hours.filter(h => h >= 17).length;
 
-    // 5. Prepare AI Prompt
-    const prompt = `
-      คุณคือ "AI เพื่อนคู่คิด" ของร้านคาเฟ่เล็กๆ ในครอบครัว
-      ภารกิจ: สรุปภาพรวมวันนี้ด้วยน้ำเสียง อบอุ่น ให้กำลังใจ และเป็นกันเอง (แบบครอบครัว)
-      
-      ข้อมูลวันนี้:
-      - ยอดขาย: ${totalSales.toLocaleString()} บาท (${totalOrders} ออเดอร์)
-      - สินค้าขายดี: ${topProducts.length > 0 ? topProducts.map(p => `${p.name} (${p.qty})`).join(", ") : "ยังไม่มีออเดอร์"}
-      - คนเยอะช่วง: เช้า(${morningCount}), บ่าย(${afternoonCount}), เย็น(${eveningCount})
-      
-      ข้อมูลเมื่อวาน:
-      - ยอดขาย: ${totalSalesYesterday.toLocaleString()} บาท
-      
-      กฎเหล็ก:
-      1. ต้องพูดภาษาไทยที่อบอุ่นเหมือนลูกหลานคุยกับเจ้าของร้าน
-      2. ต้องเปรียบเทียบกับเมื่อวานเสมอ (เช่น ดีขึ้น หรือ ให้กำลังใจถ้าลดลง)
-      3. ห้ามตัดจบกลางคั้น! ต้องแน่ใจว่าประโยคสุดท้ายจบสมบูรณ์ (มีจุดทศนิยมหรือลงท้ายด้วย ครับ/นะครับ)
-      4. ความยาวไม่เกิน 3-4 ประโยคสั้นๆ แต่ต้องได้ใจความ
-      5. หากเป็นช่วงเช้าที่ยังไม่มีขาย ให้เน้นให้กำลังใจ "ขอให้วันนี้เป็นวันที่ดี"
-    `;
+    // 5. Prepare AI Prompt from external config
+    const prompt = AI_CONFIG.systemPrompt({
+      totalSales,
+      totalOrders,
+      topProducts,
+      morningCount,
+      afternoonCount,
+      eveningCount,
+      totalSalesYesterday
+    });
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ 
-        summary: "ระบบกำลังรอการตั้งค่า API Key เพื่อเปิดใช้งาน AI สรุปข้อมูลอัจฉริยะครับ...",
+        summary: "ระบบกำลังรอเจ้าของร้านตั้งค่า API Key ในไฟล์ .env ครับ...",
         isReady: false
       });
     }
 
-    // ใช้ gemini-3.0-flash ตามที่แนะนำ (เวอร์ชันล่าสุดที่แรงและเสถียร)
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI_CONFIG.defaultModel}:generateContent?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -93,7 +83,7 @@ export async function GET() {
           temperature: 0.8,
           topK: 40,
           topP: 0.95,
-          maxOutputTokens: 1024, // เพิ่มโควต้าตัวอักษรให้เยอะขึ้น
+          maxOutputTokens: 1024,
         }
       })
     });
@@ -101,33 +91,29 @@ export async function GET() {
     const result = await response.json();
 
     if (!response.ok) {
-      console.error("Gemini API Error Response:", result);
+      console.error("Gemini API Error:", result.error?.message);
       return NextResponse.json({ 
-        summary: `AI ขัดข้องชั่วคราว (${result.error?.message || response.statusText})`,
-        isReady: true,
-        debug: result.error
+        summary: "ขออภัยครับ เพื่อนคู่คิด AI ขัดข้องชั่วคราว ลองกดรีเฟรชอีกสักครู่นะครับ",
+        isReady: true
       });
     }
 
     const aiText = result.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!aiText) {
-      console.warn("Gemini API No Candidates:", result);
       return NextResponse.json({ 
-        summary: "AI ไม่สามารถสรุปได้ในขณะนี้ (อาจติดกรองความปลอดภัย) ลองกดรีเฟรชอีกครั้งดูนะ",
-        isReady: true,
-        debug: result
+        summary: "วันนี้ AI ยังไม่พรอบระมวลผลข้อมูล ลองกดรีเฟรชอีกครั้งดูนะ",
+        isReady: true
       });
     }
 
     return NextResponse.json({ summary: aiText.trim(), isReady: true });
 
   } catch (error: any) {
-    console.error("AI Summary API Catch:", error);
+    console.error("AI Summary Critical Error:", error.message);
     return NextResponse.json({ 
-      summary: "เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI ครับ", 
-      isReady: true,
-      error: error.message 
+      summary: "เกิดข้อผิดพลาดในการเชื่อมต่อระบบวิเคราะห์ข้อมูลครับ", 
+      isReady: true
     }, { status: 500 });
   }
 }

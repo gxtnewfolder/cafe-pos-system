@@ -157,6 +157,24 @@ export default function ProductsPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Client-side Validation
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error(t("settings.uploadError"), { 
+        description: "อนุญาตเฉพาะไฟล์รูปภาพ (JPG, PNG, WEBP) เท่านั้นครับ" 
+      });
+      return;
+    }
+
+    if (file.size > maxSize) {
+      toast.error(t("settings.uploadError"), { 
+        description: "ขนาดไฟล์ต้องไม่เกิน 2MB นะครับ" 
+      });
+      return;
+    }
+
     setIsUploading(true);
     const formData = new FormData();
     formData.append("file", file);

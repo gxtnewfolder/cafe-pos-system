@@ -114,6 +114,18 @@ export default function POSScreen({ products: initialProducts }: POSScreenProps)
     }
   }, [status, router]);
 
+  // Ensure discount does not exceed totalAmount when items are removed
+  useEffect(() => {
+    const currentTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+    const currentDiscount = Number(discount) || 0;
+    
+    if (currentDiscount > currentTotal && currentTotal > 0) {
+      setDiscount(currentTotal.toString());
+    } else if (currentTotal === 0 && currentDiscount > 0) {
+      setDiscount("");
+    }
+  }, [cart, discount]);
+
   // Filter products based on category and search
   const filteredProducts = products.filter((product) => {
     const normalizedProductCategory = product.category.toLowerCase().replace('_', '-');
